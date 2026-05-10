@@ -2,26 +2,26 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - Actualizado</title>
+    <title>Generador Wikitaxa Pro - V3</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; }
-        .container { max-width: 950px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { color: #004a99; border-bottom: 2px solid #004a99; padding-bottom: 10px; margin-top: 0; }
-        .section-title { background: #eef2f7; padding: 8px 15px; font-weight: bold; margin: 25px 0 10px 0; border-left: 4px solid #004a99; font-size: 14px; }
-        .instruction { font-size: 11px; color: #666; font-weight: normal; margin-left: 5px; font-style: italic; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .full { grid-column: span 3; }
-        .half { grid-column: span 2; }
-        label { font-weight: 600; display: block; margin-bottom: 5px; font-size: 13px; }
-        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
-        textarea { height: 100px; resize: vertical; }
+        .section-title { background: #eef2f7; padding: 8px 15px; font-weight: bold; margin: 25px 0 10px 0; border-left: 4px solid #004a99; display: flex; align-items: center; justify-content: space-between; }
+        .instruction { font-size: 11px; color: #666; font-weight: normal; margin-left: 5px; font-style: italic; display: block; margin-top: 2px; }
+        .grid-taxa { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .grid-img { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 13px; margin-top: 5px; }
+        textarea { height: 80px; resize: vertical; }
         .btn-group { margin-top: 30px; display: flex; gap: 10px; justify-content: center; border-top: 1px solid #eee; padding-top: 20px; }
-        button { padding: 12px 25px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-main { background: #004a99; color: white; }
         .btn-dl { background: #28a745; color: white; }
         .btn-reset { background: #dc3545; color: white; }
-        button:hover { opacity: 0.8; }
+        .extra-img-btn { background: #6c757d; color: white; font-size: 11px; padding: 5px 10px; }
+        #extra-images { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px; }
         #preview { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; display: none; border: 1px solid #3e3e3e; }
+        label { font-weight: 600; font-size: 12px; color: #444; }
     </style>
 </head>
 <body>
@@ -30,65 +30,77 @@
     <h2>Generador de Fichas Wikitaxa</h2>
     
     <div class="section-title">1. Identificación y Autoría</div>
-    <div class="grid">
-        <div class="full">
-            <label>Título de la página <span class="instruction">(Agregar nombre del taxón, con su autor y año)</span></label>
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px;">
+        <div>
+            <label>Título de la página <span class="instruction">Agregar nombre del taxón, con su autor y año</span></label>
             <input type="text" id="titulo_sp">
         </div>
         <div>
-            <label>Autor de la ficha <span class="instruction">(Nombre completo del autor)</span></label>
+            <label>Autor de la ficha <span class="instruction">Nombre completo</span></label>
             <input type="text" id="autor_nom">
         </div>
-        <div class="half">
-            <label>Afiliación Institucional <span class="instruction">(Unidad, Institución, País)</span></label>
+        <div>
+            <label>Afiliación <span class="instruction">Unidad, Institución, País</span></label>
             <input type="text" id="autor_inst">
         </div>
     </div>
 
-    <div class="section-title">2. Clasificación Taxonómica <span class="instruction">(Escribir el nombre del taxón anteponiendo su nivel jerárquico correspondiente)</span></div>
-    <div class="grid">
-        <div><label>Reino</label><input type="text" id="t1" value="Reino "></div>
-        <div><label>Phylum</label><input type="text" id="t2" value="Phylum "></div>
-        <div><label>Clase</label><input type="text" id="t3" value="Clase "></div>
-        <div><label>Orden</label><input type="text" id="t4" value="Orden "></div>
-        <div><label>Suborden</label><input type="text" id="t5" value="Suborden "></div>
-        <div><label>Superfamilia</label><input type="text" id="t6" value="Superfamilia "></div>
-        <div><label>Familia</label><input type="text" id="t7" value="Familia "></div>
-        <div><label>Subfamilia</label><input type="text" id="t8" value="Subfamilia "></div>
-        <div><label>Tribu</label><input type="text" id="t9" value="Tribu "></div>
-        <div class="full"><label>Género</label><input type="text" id="t10" value="Género "></div>
+    <div class="section-title">2. Clasificación Taxonómica <span class="instruction">Anteponer nivel jerárquico. Se omitirán los campos que queden vacíos.</span></div>
+    <div class="grid-taxa">
+        <div><label>Nivel 1</label><input type="text" id="t1" value="Reino "></div>
+        <div><label>Nivel 2</label><input type="text" id="t2" value="Phylum "></div>
+        <div><label>Nivel 3</label><input type="text" id="t3" value="Clase "></div>
+        <div><label>Nivel 4</label><input type="text" id="t4" value="Orden "></div>
+        <div><label>Nivel 5</label><input type="text" id="t5" value="Suborden "></div>
+        <div><label>Nivel 6</label><input type="text" id="t6" value="Infraorden "></div>
+        <div><label>Nivel 7</label><input type="text" id="t7" value="Superfamilia "></div>
+        <div><label>Nivel 8</label><input type="text" id="t8" value="Familia "></div>
+        <div><label>Nivel 9</label><input type="text" id="t9" value="Subfamilia "></div>
+        <div><label>Nivel 10</label><input type="text" id="t10" value="Tribu "></div>
+        <div><label>Nivel 11</label><input type="text" id="t11" value="Subtribu "></div>
+        <div><label>Nivel 12 (Género)</label><input type="text" id="t12" value="Género "></div>
     </div>
 
-    <div class="section-title">3. Multimedia</div>
-    <div class="grid">
-        <div class="half">
-            <label>URL Imagen 1 <span class="instruction">(Link directo)</span></label>
+    <div class="section-title">
+        3. Multimedia 
+        <button class="extra-img-btn" onclick="toggleExtraImages()">+ Agregar más imágenes</button>
+    </div>
+    <p class="instruction" style="margin-bottom:10px;">Obtener links directos enviando las imágenes mediante el editor de Wikitaxa.</p>
+    
+    <div class="grid-img">
+        <div>
+            <label>URL Imagen 1</label>
             <input type="text" id="img1">
-            <label style="margin-top:10px;">Epígrafe Figura 1 <span class="instruction">(Descripción de la imagen)</span></label>
+            <label style="display:block; margin-top:5px;">Epígrafe Figura 1 <span class="instruction">Iniciar como: Figura 1. Leyenda...</span></label>
             <textarea id="pie1"></textarea>
         </div>
         <div>
-            <label>URL Imagen 2 <span class="instruction">(Link directo)</span></label>
+            <label>URL Imagen 2</label>
             <input type="text" id="img2">
-            <label style="margin-top:10px;">Epígrafe Figura 2 <span class="instruction">(Descripción de la imagen)</span></label>
+            <label style="display:block; margin-top:5px;">Epígrafe Figura 2 <span class="instruction">Iniciar como: Figura 2. Leyenda...</span></label>
             <textarea id="pie2"></textarea>
         </div>
     </div>
 
+    <div id="extra-images">
+        <div class="grid-img">
+            <div><label>URL Imagen 3</label><input type="text" id="img3"><textarea id="pie3" placeholder="Figura 3. Leyenda..."></textarea></div>
+            <div><label>URL Imagen 4</label><input type="text" id="img4"><textarea id="pie4" placeholder="Figura 4. Leyenda..."></textarea></div>
+            <div><label>URL Imagen 5</label><input type="text" id="img5"><textarea id="pie5" placeholder="Figura 5. Leyenda..."></textarea></div>
+            <div><label>URL Imagen 6</label><input type="text" id="img6"><textarea id="pie6" placeholder="Figura 6. Leyenda..."></textarea></div>
+        </div>
+    </div>
+
     <div class="section-title">4. Contenido Técnico</div>
-    <div class="grid">
-        <div class="full">
-            <label>Determinación <span class="instruction">(Caracteres diagnósticos y comparativa)</span></label>
-            <textarea id="det"></textarea>
-        </div>
-        <div class="full">
-            <label>Distribución <span class="instruction">(Rango geográfico y localidades)</span></label>
-            <textarea id="dist"></textarea>
-        </div>
-        <div class="full">
-            <label>Referencias Recomendadas <span class="instruction">(Formato APA, una por línea iniciando con *)</span></label>
-            <textarea id="refs"></textarea>
-        </div>
+    <div>
+        <label>Determinación <span class="instruction">Agregar diagnosis para el reconocimiento del taxón y comparativa con otros taxones similares (con respaldo de referencias).</span></label>
+        <textarea id="det" style="height:120px;"></textarea>
+        
+        <label style="display:block; margin-top:15px;">Distribución <span class="instruction">Detallar distribución conocida, rangos y localidades (con respaldo de referencias).</span></label>
+        <textarea id="dist" style="height:100px;"></textarea>
+        
+        <label style="display:block; margin-top:15px;">Referencias citadas <span class="instruction">Formato APA: Autor, A. A. (Año). Título. Revista, Vol(No), pág. Una por línea iniciando con *</span></label>
+        <textarea id="refs" style="height:120px;"></textarea>
     </div>
 
     <div class="btn-group">
@@ -101,17 +113,48 @@
 </div>
 
 <script>
+function toggleExtraImages() {
+    const div = document.getElementById('extra-images');
+    div.style.display = (div.style.display === 'block') ? 'none' : 'block';
+}
+
 function buildCode() {
-    const taxaIds = ['t1','t2','t3','t4','t5','t6','t7','t8','t9','t10'];
-    const taxaFmt = taxaIds.map(id => {
-        let val = document.getElementById(id).value.trim();
-        // Solo incluir si el valor es más largo que la etiqueta prellenada (ej: "Reino ")
-        const labelText = document.querySelector(`label[for="${id}"]`) || {innerText: ""}; 
-        if (val.length > 15 || (val.split(' ').length > 1 && val.split(' ')[1] !== "")) {
-            return `[[[${val}]]]`;
+    let taxaArr = [];
+    for(let i=1; i<=12; i++) {
+        let val = document.getElementById('t'+i).value.trim();
+        // Solo agrega si tiene contenido después del prefijo (asumiendo prefijos cortos)
+        if(val.length > 12 || (val.includes(' ') && val.split(' ')[1].length > 0)) {
+            taxaArr.push(`[[[${val}]]]`);
         }
-        return null;
-    }).filter(v => v).join(': ');
+    }
+    
+    let imgCode = `[[table style="width: 100%; margin: 0; padding: 0; border-collapse: collapse;"]]
+[[row]]
+[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]
+[[image ${document.getElementById('img1').value} width="100%" alt="Imagen 1" link="*${document.getElementById('img1').value}"]]
+**${document.getElementById('pie1').value}**
+[[/cell]]
+[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]
+[[div style="margin: 0 auto; width: 60%; text-align: center;"]]
+[[image ${document.getElementById('img2').value} width="103%" alt="Imagen 2" link="*${document.getElementById('img2').value}"]]
+[[/div]]
+**${document.getElementById('pie2').value}**
+[[/cell]]
+[[/row]]`;
+
+    // Lógica para imágenes extras
+    for(let i=3; i<=6; i+=2) {
+        let urlA = document.getElementById('img'+i).value;
+        let urlB = document.getElementById('img'+(i+1)).value;
+        if(urlA || urlB) {
+            imgCode += `\n[[row]]\n[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]`;
+            if(urlA) imgCode += `[[image ${urlA} width="100%" link="*${urlA}"]]\n**${document.getElementById('pie'+i).value}**`;
+            imgCode += `[[/cell]]\n[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]`;
+            if(urlB) imgCode += `[[image ${urlB} width="100%" link="*${urlB}"]]\n**${document.getElementById('pie'+(i+1)).value}**`;
+            imgCode += `[[/cell]]\n[[/row]]`;
+        }
+    }
+    imgCode += `\n[[/table]]`;
 
     return `Título: ${document.getElementById('titulo_sp').value}
 
@@ -120,24 +163,11 @@ function buildCode() {
 ------
 
 ++ Clasificación:
-${taxaFmt}
+${taxaArr.join(': ')}
 
 ------
 
-[[table style="width: 100%; margin: 0; padding: 0; border-collapse: collapse;"]]
-[[row]]
-[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]
-[[image ${document.getElementById('img1').value} width="100%" alt="Imagen 1" link="*${document.getElementById('img1').value}"]]
-**Figura 1:** ${document.getElementById('pie1').value}
-[[/cell]]
-[[cell style="width: 50%; padding: 5px; vertical-align: top;"]]
-[[div style="margin: 0 auto; width: 60%; text-align: center;"]]
-[[image ${document.getElementById('img2').value} width="103%" alt="Imagen 2" link="*${document.getElementById('img2').value}"]]
-[[/div]]
-**Figura 2:** ${document.getElementById('pie2').value}
-[[/cell]]
-[[/row]]
-[[/table]]
+${imgCode}
 
 ------
 
@@ -159,21 +189,20 @@ function showPreview() {
     const p = document.getElementById('preview');
     p.innerText = buildCode();
     p.style.display = 'block';
+    p.scrollIntoView({ behavior: 'smooth' });
 }
 
 function downloadTxt() {
     const blob = new Blob([buildCode()], {type: 'text/plain'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    const fileName = document.getElementById('titulo_sp').value.split(' ')[0] || 'nueva_ficha';
-    a.download = `ficha_${fileName.toLowerCase()}.txt`;
+    const name = document.getElementById('titulo_sp').value.split(' ')[0] || 'ficha';
+    a.download = `ficha_${name.toLowerCase()}.txt`;
     a.click();
 }
 
 function resetForm() {
-    if(confirm("¿Seguro que quieres limpiar todos los campos para una nueva ficha?")) {
-        location.reload();
-    }
+    if(confirm("¿Limpiar todos los campos?")) location.reload();
 }
 </script>
 </body>
