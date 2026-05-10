@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - V3.5</title>
+    <title>Generador Wikitaxa Pro - V3.6</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
@@ -16,19 +16,20 @@
         textarea { height: 80px; resize: vertical; }
         
         .btn-group-init { margin-top: 30px; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
-        .btn-dl-container { margin-top: 20px; text-align: center; display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; }
+        .btn-dl-container { margin-top: 20px; text-align: center; display: none; background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; }
         
         button { border: none; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-main { background: #004a99; color: white; padding: 12px 30px; font-size: 15px; }
-        .btn-dl { background: #28a745; color: white; padding: 15px 40px; font-size: 16px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+        .btn-dl { background: #28a745; color: white; padding: 15px 40px; font-size: 16px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); margin-bottom: 15px; }
         .btn-reset { background: #6c757d; color: white; padding: 6px 12px; font-size: 11px; opacity: 0.7; }
+        .btn-reset-large { background: #6c757d; color: white; padding: 10px 20px; font-size: 13px; margin-top: 15px; }
         .extra-img-btn { background: #6c757d; color: white; font-size: 11px; padding: 5px 10px; }
         
         button:hover { opacity: 1; transform: translateY(-1px); }
         #extra-images { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px; }
         #preview { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; display: none; border: 1px solid #3e3e3e; font-size: 12px; }
         label { font-weight: 600; font-size: 12px; color: #444; }
-        .footer-note { margin-top: 25px; padding: 15px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; color: #856404; text-align: center; font-weight: bold; }
+        .footer-note { margin-top: 25px; padding: 15px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; color: #856404; text-align: center; font-weight: bold; line-height: 1.4; }
         .sub-note { color: #666; font-size: 10.5px; font-weight: normal; margin-top: 4px; display: block; font-style: italic; }
     </style>
 </head>
@@ -126,10 +127,12 @@
     <div id="download-zone" class="btn-dl-container">
         <p style="margin-bottom: 15px; font-weight: bold; color: #28a745;">✓ Código generado con éxito. Revise la vista previa arriba.</p>
         <button class="btn-dl" onclick="downloadTxt()">Descargar Ficha (.txt)</button>
-    </div>
-
-    <div class="footer-note">
-        Enviar el archivo (txt.) al email taxonomíawikitaxa@gmail.com, para su evaluación y posterior publicación por parte del editor.
+        
+        <div class="footer-note">
+            Enviar el archivo (.txt) al email taxonomíawikitaxa@gmail.com, para su evaluación y posterior publicación por parte del editor.
+        </div>
+        
+        <button class="btn-reset btn-reset-large" onclick="resetForm()">Iniciar nueva ficha</button>
     </div>
 </div>
 
@@ -221,7 +224,7 @@ function showPreview() {
     p.innerText = buildCode();
     p.style.display = 'block';
     dl.style.display = 'block';
-    p.scrollIntoView({ behavior: 'smooth' });
+    dl.scrollIntoView({ behavior: 'smooth' });
 }
 
 function downloadTxt() {
