@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - V3.8</title>
+    <title>Generador Wikitaxa Pro - V3.9</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
@@ -37,7 +37,7 @@
 
 <div class="container">
     <div class="header-flex">
-        <h2>Generador de Fichas Wikitaxa</h2>
+        <h2 id="main-title">Generador de Fichas Wikitaxa</h2>
         <button class="btn-reset" onclick="resetForm()">Iniciar nueva ficha</button>
     </div>
     
@@ -248,8 +248,13 @@ function downloadTxt() {
 
 function resetForm() {
     if(confirm("¿Seguro que quieres limpiar todos los campos para una nueva ficha?")) {
-        window.scrollTo(0, 0);
-        location.reload();
+        // Redirigir al ancla del título principal
+        document.getElementById('main-title').scrollIntoView({ behavior: 'smooth' });
+        
+        // Un ligero retraso para permitir ver el scroll antes de limpiar
+        setTimeout(() => {
+            location.reload();
+        }, 500);
     }
 }
 </script>
