@@ -2,12 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro</title>
+    <title>Generador Wikitaxa Pro - Actualizado</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; }
         .container { max-width: 950px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         h2 { color: #004a99; border-bottom: 2px solid #004a99; padding-bottom: 10px; margin-top: 0; }
-        .section-title { background: #eef2f7; padding: 8px 15px; font-weight: bold; margin: 20px 0 10px 0; border-left: 4px solid #004a99; }
+        .section-title { background: #eef2f7; padding: 8px 15px; font-weight: bold; margin: 25px 0 10px 0; border-left: 4px solid #004a99; font-size: 14px; }
+        .instruction { font-size: 11px; color: #666; font-weight: normal; margin-left: 5px; font-style: italic; }
         .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
         .full { grid-column: span 3; }
         .half { grid-column: span 2; }
@@ -20,7 +21,7 @@
         .btn-dl { background: #28a745; color: white; }
         .btn-reset { background: #dc3545; color: white; }
         button:hover { opacity: 0.8; }
-        #preview { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; display: none; }
+        #preview { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; display: none; border: 1px solid #3e3e3e; }
     </style>
 </head>
 <body>
@@ -31,42 +32,45 @@
     <div class="section-title">1. Identificación y Autoría</div>
     <div class="grid">
         <div class="full">
-            <label>Título de la página (Nombre de la especie sin formato)</label>
-            <input type="text" id="titulo_sp" placeholder="Ej: Isocladus bahamondei">
+            <label>Título de la página <span class="instruction">(Agregar nombre del taxón, con su autor y año)</span></label>
+            <input type="text" id="titulo_sp">
         </div>
         <div>
-            <label>Autor de la ficha</label>
-            <input type="text" id="autor_nom" value="Jorge Pérez-Schultheiss">
+            <label>Autor de la ficha <span class="instruction">(Nombre completo del autor)</span></label>
+            <input type="text" id="autor_nom">
         </div>
         <div class="half">
-            <label>Afiliación Institucional</label>
-            <input type="text" id="autor_inst" value="Área Zoología de Invertebrados, Museo Nacional de Historia Natural, Chile.">
+            <label>Afiliación Institucional <span class="instruction">(Unidad, Institución, País)</span></label>
+            <input type="text" id="autor_inst">
         </div>
     </div>
 
-    <div class="section-title">2. Clasificación Taxonómica</div>
+    <div class="section-title">2. Clasificación Taxonómica <span class="instruction">(Escribir el nombre del taxón anteponiendo su nivel jerárquico correspondiente)</span></div>
     <div class="grid">
-        <input type="text" id="t1" placeholder="Reino Animalia">
-        <input type="text" id="t2" placeholder="Phylum Arthropoda">
-        <input type="text" id="t3" placeholder="Clase Malacostraca">
-        <input type="text" id="t4" placeholder="Orden Isopoda">
-        <input type="text" id="t5" placeholder="Suborden Sphaeromatidea">
-        <input type="text" id="t6" placeholder="Familia Sphaeromatidae">
-        <input type="text" id="t7" placeholder="Género Isocladus" class="full">
+        <div><label>Reino</label><input type="text" id="t1" value="Reino "></div>
+        <div><label>Phylum</label><input type="text" id="t2" value="Phylum "></div>
+        <div><label>Clase</label><input type="text" id="t3" value="Clase "></div>
+        <div><label>Orden</label><input type="text" id="t4" value="Orden "></div>
+        <div><label>Suborden</label><input type="text" id="t5" value="Suborden "></div>
+        <div><label>Superfamilia</label><input type="text" id="t6" value="Superfamilia "></div>
+        <div><label>Familia</label><input type="text" id="t7" value="Familia "></div>
+        <div><label>Subfamilia</label><input type="text" id="t8" value="Subfamilia "></div>
+        <div><label>Tribu</label><input type="text" id="t9" value="Tribu "></div>
+        <div class="full"><label>Género</label><input type="text" id="t10" value="Género "></div>
     </div>
 
     <div class="section-title">3. Multimedia</div>
     <div class="grid">
         <div class="half">
-            <label>URL Imagen 1</label>
+            <label>URL Imagen 1 <span class="instruction">(Link directo)</span></label>
             <input type="text" id="img1">
-            <label style="margin-top:10px;">Epígrafe Figura 1</label>
+            <label style="margin-top:10px;">Epígrafe Figura 1 <span class="instruction">(Descripción de la imagen)</span></label>
             <textarea id="pie1"></textarea>
         </div>
         <div>
-            <label>URL Imagen 2</label>
+            <label>URL Imagen 2 <span class="instruction">(Link directo)</span></label>
             <input type="text" id="img2">
-            <label style="margin-top:10px;">Epígrafe Figura 2</label>
+            <label style="margin-top:10px;">Epígrafe Figura 2 <span class="instruction">(Descripción de la imagen)</span></label>
             <textarea id="pie2"></textarea>
         </div>
     </div>
@@ -74,16 +78,16 @@
     <div class="section-title">4. Contenido Técnico</div>
     <div class="grid">
         <div class="full">
-            <label>Determinación</label>
+            <label>Determinación <span class="instruction">(Caracteres diagnósticos y comparativa)</span></label>
             <textarea id="det"></textarea>
         </div>
         <div class="full">
-            <label>Distribución</label>
+            <label>Distribución <span class="instruction">(Rango geográfico y localidades)</span></label>
             <textarea id="dist"></textarea>
         </div>
         <div class="full">
-            <label>Referencias Recomendadas</label>
-            <textarea id="refs" placeholder="* Autor (Año)..."></textarea>
+            <label>Referencias Recomendadas <span class="instruction">(Formato APA, una por línea iniciando con *)</span></label>
+            <textarea id="refs"></textarea>
         </div>
     </div>
 
@@ -98,10 +102,15 @@
 
 <script>
 function buildCode() {
-    const taxaIds = ['t1','t2','t3','t4','t5','t6','t7'];
+    const taxaIds = ['t1','t2','t3','t4','t5','t6','t7','t8','t9','t10'];
     const taxaFmt = taxaIds.map(id => {
         let val = document.getElementById(id).value.trim();
-        return val ? `[[[${val}]]]` : null;
+        // Solo incluir si el valor es más largo que la etiqueta prellenada (ej: "Reino ")
+        const labelText = document.querySelector(`label[for="${id}"]`) || {innerText: ""}; 
+        if (val.length > 15 || (val.split(' ').length > 1 && val.split(' ')[1] !== "")) {
+            return `[[[${val}]]]`;
+        }
+        return null;
     }).filter(v => v).join(': ');
 
     return `Título: ${document.getElementById('titulo_sp').value}
@@ -156,12 +165,13 @@ function downloadTxt() {
     const blob = new Blob([buildCode()], {type: 'text/plain'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `ficha_${document.getElementById('titulo_sp').value || 'nueva'}.txt`;
+    const fileName = document.getElementById('titulo_sp').value.split(' ')[0] || 'nueva_ficha';
+    a.download = `ficha_${fileName.toLowerCase()}.txt`;
     a.click();
 }
 
 function resetForm() {
-    if(confirm("¿Seguro que quieres limpiar todos los campos?")) {
+    if(confirm("¿Seguro que quieres limpiar todos los campos para una nueva ficha?")) {
         location.reload();
     }
 }
