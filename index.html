@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - V3.4</title>
+    <title>Generador Wikitaxa Pro - V3.5</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
@@ -113,8 +113,8 @@
         <label style="display:block; margin-top:15px;">Distribución <span class="instruction">Detallar distribución conocida, rangos y localidades (con respaldo de referencias).</span></label>
         <textarea id="dist" style="height:100px;"></textarea>
         
-        <label style="display:block; margin-top:15px;">Referencias citadas <span class="instruction">Formato APA. Una por línea iniciando con *</span></label>
-        <textarea id="refs" style="height:120px;"></textarea>
+        <label style="display:block; margin-top:15px;">Referencias citadas <span class="instruction">Formato APA. Al presionar Enter se añadirá automáticamente el asterisco (*).</span></label>
+        <textarea id="refs" style="height:120px;" onkeyup="handleRefBullet(event)">* </textarea>
     </div>
 
     <div class="btn-group-init">
@@ -129,11 +129,22 @@
     </div>
 
     <div class="footer-note">
-        Enviar el archivo txt resultante al editor al email taxonomíawikitaxa@gmail.com, para su evaluación y posterior publicación.
+        Enviar el archivo (txt.) al email taxonomíawikitaxa@gmail.com, para su evaluación y posterior publicación por parte del editor.
     </div>
 </div>
 
 <script>
+function handleRefBullet(e) {
+    if (e.key === 'Enter') {
+        const el = e.target;
+        const pos = el.selectionStart;
+        const val = el.value;
+        const bullet = "* ";
+        el.value = val.slice(0, pos) + bullet + val.slice(pos);
+        el.selectionStart = el.selectionEnd = pos + bullet.length;
+    }
+}
+
 function toggleExtraImages() {
     const div = document.getElementById('extra-images');
     div.style.display = (div.style.display === 'block') ? 'none' : 'block';
