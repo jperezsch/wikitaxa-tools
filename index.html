@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - V3.7</title>
+    <title>Generador Wikitaxa Pro - V3.8</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
@@ -44,7 +44,7 @@
     <div class="section-title">1. Identificación y Autoría</div>
     <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px;">
         <div>
-            <label>Título de la página <span class="instruction">Nombre de la especie + Autor y Año (ej: Isocladus bahamondei Carvacho, 1997). No usar códigos decorativos.</span></label>
+            <label>Título de la página <span class="instruction">Nombre de la especie + Autor y Año (ej: Isocladus bahamondei Carvacho, 1997).</span></label>
             <input type="text" id="titulo_sp" placeholder="Ej: Isocladus bahamondei Carvacho, 1997">
         </div>
         <div>
@@ -80,7 +80,7 @@
         3. Multimedia 
         <button class="extra-img-btn" onclick="toggleExtraImages()">+ Agregar más imágenes</button>
     </div>
-    <p class="instruction" style="margin-bottom:10px;">Para obtener los links, solicitarlos a email taxonomíawikitaxa@gmail.com, adjuntando las imagenes.</p>
+    <p class="instruction" style="margin-bottom:10px;">Previamente, enviar imagenes al email taxonomíawikitaxa@gmail.com, solicitando los enlaces directos.</p>
     
     <div class="grid-img">
         <div>
@@ -162,8 +162,6 @@ function buildCode() {
         }
     }
     
-    // El script ya asume que el usuario pone: Género especie Autor, Año
-    // Se extraen las dos primeras palabras para ponerlas en cursiva automáticamente
     let rawTitle = document.getElementById('titulo_sp').value.trim();
     let titleParts = rawTitle.split(' ');
     let formattedTitle = rawTitle;
