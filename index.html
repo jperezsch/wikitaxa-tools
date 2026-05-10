@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Generador Wikitaxa Pro - V3.3</title>
+    <title>Generador Wikitaxa Pro - V3.4</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f4f8; padding: 20px; color: #333; font-size: 14px; }
         .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
@@ -29,7 +29,7 @@
         #preview { margin-top: 20px; background: #272822; color: #f8f8f2; padding: 20px; border-radius: 5px; white-space: pre-wrap; font-family: monospace; display: none; border: 1px solid #3e3e3e; font-size: 12px; }
         label { font-weight: 600; font-size: 12px; color: #444; }
         .footer-note { margin-top: 25px; padding: 15px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; color: #856404; text-align: center; font-weight: bold; }
-        .warning-taxa { color: #b44; font-size: 10.5px; font-weight: normal; margin-top: 4px; display: block; }
+        .sub-note { color: #666; font-size: 10.5px; font-weight: normal; margin-top: 4px; display: block; font-style: italic; }
     </style>
 </head>
 <body>
@@ -58,7 +58,7 @@
 
     <div class="section-title">2. Clasificación Taxonómica <span class="instruction">Anteponer nivel jerárquico.</span></div>
     <div style="padding: 0 10px 10px 10px;">
-        <span class="warning-taxa">** Nota: Autor y Año se incluyen solo en el nivel de Género. Niveles superiores no llevan autoría.</span>
+        <span class="sub-note">** Nota: no incluir autor y año de los nombres.</span>
     </div>
     <div class="grid-taxa">
         <div><label>Nivel 1</label><input type="text" id="t1" value="Reino "></div>
@@ -79,29 +79,29 @@
         3. Multimedia 
         <button class="extra-img-btn" onclick="toggleExtraImages()">+ Agregar más imágenes</button>
     </div>
-    <p class="instruction" style="margin-bottom:10px; color: #b44;">Obtener links directos enviando las imágenes al editor de Wikitaxa (taxonomíawikitaxa@gmail.com).</p>
+    <p class="instruction" style="margin-bottom:10px;">Para obtener los links, solicitarlos a email taxonomíawikitaxa@gmail.com, adjuntando las imagenes.</p>
     
     <div class="grid-img">
         <div>
             <label>URL Imagen 1</label>
             <input type="text" id="img1">
-            <label style="display:block; margin-top:5px;">Epígrafe Figura 1 <span class="instruction">Iniciar como: Figura 1. Leyenda...</span></label>
-            <textarea id="pie1"></textarea>
+            <label style="display:block; margin-top:5px;">Epígrafe Figura 1 <span class="instruction">Ej: //Especie// Autor, Año: descripción...</span></label>
+            <textarea id="pie1">Figura 1. </textarea>
         </div>
         <div>
             <label>URL Imagen 2</label>
             <input type="text" id="img2">
-            <label style="display:block; margin-top:5px;">Epígrafe Figura 2 <span class="instruction">Iniciar como: Figura 2. Leyenda...</span></label>
-            <textarea id="pie2"></textarea>
+            <label style="display:block; margin-top:5px;">Epígrafe Figura 2 <span class="instruction">Ej: //Especie// Autor, Año: descripción...</span></label>
+            <textarea id="pie2">Figura 2. </textarea>
         </div>
     </div>
 
     <div id="extra-images">
         <div class="grid-img">
-            <div><label>URL Imagen 3</label><input type="text" id="img3"><textarea id="pie3" placeholder="Figura 3. Leyenda..."></textarea></div>
-            <div><label>URL Imagen 4</label><input type="text" id="img4"><textarea id="pie4" placeholder="Figura 4. Leyenda..."></textarea></div>
-            <div><label>URL Imagen 5</label><input type="text" id="img5"><textarea id="pie5" placeholder="Figura 5. Leyenda..."></textarea></div>
-            <div><label>URL Imagen 6</label><input type="text" id="img6"><textarea id="pie6" placeholder="Figura 6. Leyenda..."></textarea></div>
+            <div><label>URL Imagen 3</label><input type="text" id="img3"><textarea id="pie3">Figura 3. </textarea></div>
+            <div><label>URL Imagen 4</label><input type="text" id="img4"><textarea id="pie4">Figura 4. </textarea></div>
+            <div><label>URL Imagen 5</label><input type="text" id="img5"><textarea id="pie5">Figura 5. </textarea></div>
+            <div><label>URL Imagen 6</label><input type="text" id="img6"><textarea id="pie6">Figura 6. </textarea></div>
         </div>
     </div>
 
