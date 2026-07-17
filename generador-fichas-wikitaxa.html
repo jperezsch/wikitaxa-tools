@@ -63,6 +63,9 @@
   .btn-main{ background:var(--accent-deep); color:#fff; }
   .btn-add{ background:#eef5f2; color:var(--accent-deep); font-size:.76rem; padding:5px 12px; }
   .btn-dl{ background:#2e7d46; color:#fff; padding:13px 28px; font-size:.95rem; }
+  .btn-copy{ background:#eef5f2; color:var(--accent-deep); border:1px solid var(--accent); padding:13px 24px; font-size:.9rem; margin-left:10px; }
+  .btn-reset{ background:#fff; color:var(--warn); border:1px solid var(--warn); padding:9px 18px; font-size:.82rem; }
+  .copy-ok{ display:none; margin-left:10px; color:#2e7d46; font-weight:700; font-size:.85rem; }
   .actions{ text-align:center; margin:22px 0; }
   #preview{
     display:none; margin-top:16px; background:#1c2128; color:#d7dee5; padding:18px;
@@ -126,11 +129,12 @@
 
     <div class="card">
       <div class="section-title">3. Grupos subordinados</div>
-      <label>Árbol taxonómico <span class="hint">Pega la lista con el mismo formato de siempre: asteriscos anidados por sangría, ej.
-* [[[Suborden X]]]&#10; * [[[Infraorden Y]]]&#10;  * [[[Familia Z]]]&#10;   * [[[Genero especie Autor, Año]]]. Las especies (líneas sin palabra de rango al inicio) se detectan solas y se les aplica la cursiva correcta automáticamente.</span></label>
-      <textarea class="mono" id="g_tree" style="height:220px" placeholder="* [[[Suborden Amphilochidea]]]
- * [[[Infraorden Amphilochida]]]
-..."></textarea>
+      <label>Árbol taxonómico <span class="hint">Escribe una entrada por línea, con el rango al inicio (ej: "Familia Cyproideidae") o el nombre científico completo para especies (ej: "Isocladus bahamondei Carvacho, 1997"). NO escribas corchetes ni espacios de sangría — se agregan solos: cada línea se indenta automáticamente según su rango, así que dos "Familia" en cualquier parte de la lista siempre quedan al mismo nivel visual. Si ya tienes una lista con el formato antiguo (con * y corchetes), puedes pegarla igual — se respeta tal cual.</span></label>
+      <textarea class="mono" id="g_tree" style="height:220px" placeholder="Suborden Amphilochidea
+Infraorden Amphilochida
+Familia Cyproideidae
+Genero especie Autor, Año"></textarea>
+      <button class="btn btn-add" style="margin-top:8px" onclick="formatTreeField()">Vista previa del formato (opcional)</button>
     </div>
 
     <div class="card">
@@ -265,15 +269,29 @@ Pereópodos ordenados..."></textarea>
   <pre id="preview"></pre>
   <div id="dlzone">
     <button class="btn btn-dl" onclick="downloadTxt()">Descargar ficha (.txt)</button>
+    <button class="btn btn-copy" onclick="copyCode()">Copiar código</button>
+    <span id="copy-ok" class="copy-ok">¡Copiado!</span>
+    <div style="margin-top:14px">
+      <button class="btn btn-reset" onclick="startNewFicha()">Comenzar otra ficha</button>
+    </div>
   </div>
 </div>
 
 <script>
 /* ===================== DATOS COMPARTIDOS ===================== */
-const RANKS = ['Superfamilia','Subfamilia','Epifamilia','Parvorden','Infraorden','Suborden',
-  'Superorden','Subclase','Clase','Superclase','Subphylum','Phylum','Reino','Familia',
-  'Tribu','Subtribu','Género','Genero','Orden'];
-const RANKS_SORTED = [...RANKS].sort((a,b)=>b.length-a.length);
+/* Profundidad jerarquica de cada rango: se usa para calcular la
+   indentacion automatica del arbol de Grupos subordinados (misma
+   profundidad = mismo nivel visual, sin que el usuario tenga que
+   contar espacios el mismo). */
+const RANK_DEPTH = {
+  'Reino':0, 'Subreino':1,
+  'Phylum':1, 'Subphylum':2,
+  'Superclase':2, 'Clase':3, 'Subclase':4, 'Infraclase':5,
+  'Superorden':5, 'Orden':6, 'Suborden':7, 'Infraorden':8, 'Parvorden':9,
+  'Superfamilia':10, 'Epifamilia':10, 'Familia':11, 'Subfamilia':12,
+  'Tribu':13, 'Subtribu':14, 'Género':15, 'Genero':15, 'Subgénero':16, 'Subgenero':16
+};
+const RANKS_SORTED = Object.keys(RANK_DEPTH).sort((a,b)=>b.length-a.length);
 
 let currentType = null;
 let gallerySlotCount = { grupo:0, especie:0, abrev:0 };
@@ -284,13 +302,48 @@ function splitBinomial(full){
   if(!m) return null;
   return { genus:m[1], epithet:m[2], rest:m[3].trim() };
 }
-function isRankLine(text){
+function matchRank(text){
   const t = text.trim();
-  return RANKS_SORTED.some(r => t.startsWith(r + ' '));
+  return RANKS_SORTED.find(r => t.startsWith(r + ' ')) || null;
+}
+function isRankLine(text){
+  return matchRank(text) !== null;
 }
 function bulletize(text, prefix){
   return text.split('\n').map(l=>l.trim()).filter(l=>l.length>0)
     .map(l=> (prefix||'* ') + l).join('\n');
+}
+/* Auto-formato del arbol: el usuario escribe texto plano, una entrada
+   por linea ('Familia X', 'Genero especie Autor, Año'...), SIN
+   corchetes ni espacios de sangria. Esta funcion agrega los corchetes
+   [[[...]]], el asterisco, y calcula la sangria automaticamente segun
+   la profundidad del rango (misma profundidad = mismos espacios,
+   siempre, sin importar donde aparezca en la lista). Las lineas que
+   YA vienen formateadas (empiezan con * [[[ o [[[) se dejan intactas,
+   para poder pegar arboles ya armados sin que se dupliquen corchetes.
+   Las especies (sin rango reconocido) quedan un nivel mas profundo que
+   el ultimo rango visto. */
+function autoFormatTree(raw){
+  let lastDepth = -1;
+  return raw.split('\n').map(line=>{
+    const t = line.trim();
+    if(!t) return '';
+    if(/^\*?\s*\[\[\[/.test(t)) return t; // ya formateada, no tocar
+    const rank = matchRank(t);
+    let depth;
+    if(rank !== null){
+      depth = RANK_DEPTH[rank];
+      lastDepth = depth;
+    } else {
+      depth = lastDepth + 1;
+    }
+    const spaces = ' '.repeat(Math.max(depth,0));
+    return spaces + '* [[[' + t + ']]]';
+  }).join('\n');
+}
+function formatTreeField(){
+  const el = document.getElementById('g_tree');
+  el.value = autoFormatTree(el.value);
 }
 function buildClassificationChain(idPrefix){
   let parts = [];
@@ -311,7 +364,8 @@ function buildClassificationChain(idPrefix){
    sin que Wikidot rompa el formato (no interpreta //cursiva// dentro
    del alias de un enlace). */
 function processTree(raw){
-  return raw.split('\n').map(line=>{
+  const formatted = autoFormatTree(raw);
+  return formatted.split('\n').map(line=>{
     const m = line.match(/^(\s*\*?\s*)\[\[\[([^\]]+)\]\]\](.*)$/);
     if(!m) return line;
     const [, prefix, text, suffix] = m;
@@ -430,6 +484,8 @@ function buildGrupoCode(){
   const foto_url = document.getElementById('g_foto_url').value.trim();
   const foto_title = document.getElementById('g_foto_title').value.trim();
   const chain = buildClassificationChain('g_t');
+  const treeLines = document.getElementById('g_tree').value.split('\n').filter(l=>l.trim().length>0).length;
+  const treeWideClass = treeLines > 12 ? ' wide' : '';
   const tree = processTree(document.getElementById('g_tree').value);
   const gallery = buildGalleryWikitext('grupo','g_',4);
 
@@ -468,7 +524,7 @@ ${chain}
 ------
 
 ++ Grupos subordinados
-[[div class="tax-tree-wrap"]]
+[[div class="tax-tree-wrap${treeWideClass}"]]
 ${tree}
 [[/div]]
 
@@ -721,7 +777,39 @@ function downloadTxt(){
   a.click();
 }
 
+function copyCode(){
+  const code = document.getElementById('preview').textContent;
+  function showOk(){
+    const ok = document.getElementById('copy-ok');
+    ok.style.display = 'inline';
+    setTimeout(()=>{ ok.style.display='none'; }, 2000);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(showOk).catch(()=>{ fallbackCopy(code, showOk); });
+  } else {
+    fallbackCopy(code, showOk);
+  }
+}
+function fallbackCopy(text, cb){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand('copy'); cb(); }catch(e){}
+  document.body.removeChild(ta);
+}
+
+function startNewFicha(){
+  if(confirm('¿Seguro que quieres limpiar todos los campos para empezar una ficha nueva?')){
+    window.scrollTo({top:0, behavior:'smooth'});
+    setTimeout(()=>{ location.reload(); }, 400);
+  }
+}
+
 document.getElementById('pending-note').style.display='block';
+
 
 /* ===================== CSS EMBEBIDO (los 3 ya validados) ===================== */
 const GROUP_CSS = `/* =====================================================================
@@ -803,7 +891,14 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   border-radius:4px;
   box-shadow:var(--shadow);
   padding:14px;
-  text-align:center;
+}
+.ficha-hero *{
+  float:none !important;
+}
+.ficha-hero > *{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
 }
 @media (max-width:800px){
   .ficha-title, .ficha-hero{ float:none; width:100%; margin-bottom:16px; }
@@ -831,12 +926,14 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   .order-name{ font-size:2.2em !important; }
 }
 .ficha-hero img{
-  width:auto !important;
+  width:100% !important;
   max-width:100% !important;
   height:auto !important;
   max-height:520px;
   object-fit:contain !important;
-  display:inline-block;
+  object-position:center !important;
+  display:block !important;
+  margin:0 !important;
   background:var(--teal-deep);
   border-radius:2px;
 }
@@ -922,12 +1019,14 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 .tax-tree-wrap > ul{
   padding-left:0;
   border-left:none;
+}
+.tax-tree-wrap.wide > ul{
   column-count:2;
   column-gap:40px;
   column-rule:1px solid var(--line-soft);
 }
 @media (max-width:820px){
-  .tax-tree-wrap > ul{ column-count:1; }
+  .tax-tree-wrap.wide > ul{ column-count:1; }
 }
 .tax-tree-wrap li{
   position:relative;
@@ -1094,6 +1193,31 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-style:italic;
   color:var(--exists) !important;
 }
+/* Leyenda como enlace real (galeria de ficha de grupo: enlaza a la
+   pagina del grupo/especie subordinada, no es solo texto decorativo).
+   Mismo tratamiento tipografico que el texto en negrita de arriba,
+   pero conservando el color verde/gris de existencia de Wikidot. */
+.gallery-wrap td > a{
+  display:block;
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.95em !important;
+  text-decoration:none !important;
+  color:var(--exists) !important;
+  margin-top:8px;
+  border-bottom:1px solid transparent;
+}
+.gallery-wrap td > a:hover{ border-bottom-color:var(--rust); color:var(--rust) !important; }
+.gallery-wrap td > a.newpage{
+  color:var(--missing) !important;
+  border-bottom-style:dashed;
+  border-bottom-color:var(--line);
+}
+.gallery-wrap td > a:first-of-type:has(+ a){
+  display:inline;
+  font-style:italic;
+}
+.gallery-wrap td > a + a{ display:inline; margin-top:0; margin-left:.3em; }
 .gallery-wrap img{
   width:100% !important;
   height:270px;
