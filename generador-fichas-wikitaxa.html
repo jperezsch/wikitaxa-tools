@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Fichas WikiTaxa</title>
+<style>
+  :root{
+    --ink:#1e2430; --soft:#5b6472; --line:#e2e5ea; --bg:#f4f6f9; --card:#ffffff;
+    --accent:#2c5f52; --accent-deep:#1b3d34; --warn:#a8462e; --sand:#b98a3b;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    padding:24px; line-height:1.45;
+  }
+  .wrap{ max-width:980px; margin:0 auto; }
+  h1{ font-size:1.5rem; margin:0 0 4px; }
+  .lead{ color:var(--soft); font-size:.92rem; margin:0 0 24px; }
+
+  /* ---- selector de tipo ---- */
+  .type-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
+  .type-card{
+    background:var(--card); border:2px solid var(--line); border-radius:10px;
+    padding:18px; cursor:pointer; transition:.15s; text-align:left;
+  }
+  .type-card:hover{ border-color:var(--accent); }
+  .type-card.active{ border-color:var(--accent); background:#eef5f2; }
+  .type-card b{ display:block; font-size:1.02rem; margin-bottom:4px; }
+  .type-card span{ font-size:.82rem; color:var(--soft); }
+
+  /* ---- panel/formulario ---- */
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:10px; padding:22px; margin-bottom:18px; }
+  .section-title{
+    font-weight:700; font-size:.95rem; color:var(--accent-deep);
+    background:#eef5f2; padding:8px 14px; border-radius:6px; margin:0 0 14px;
+    border-left:4px solid var(--accent);
+  }
+  .row{ display:grid; gap:12px; margin-bottom:12px; }
+  .row.c2{ grid-template-columns:1fr 1fr; }
+  .row.c3{ grid-template-columns:1fr 1fr 1fr; }
+  .row.c4{ grid-template-columns:repeat(4,1fr); }
+  label{ font-size:.78rem; font-weight:600; color:#334; display:block; margin-bottom:4px; }
+  .hint{ font-weight:400; font-style:italic; color:var(--soft); font-size:.72rem; display:block; margin-top:1px; }
+  input[type=text], input[type=url], textarea{
+    width:100%; padding:8px 10px; border:1px solid #ccd2da; border-radius:6px;
+    font-size:.86rem; font-family:inherit; background:#fff;
+  }
+  textarea{ resize:vertical; }
+  textarea.mono{ font-family:'SF Mono',Consolas,monospace; font-size:.8rem; }
+  .taxa-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:6px; }
+  .taxa-grid input{ font-size:.8rem; }
+  .gallery-slot{ border:1px dashed var(--line); border-radius:8px; padding:12px; margin-bottom:10px; }
+  .gallery-slot h4{ margin:0 0 8px; font-size:.82rem; color:var(--soft); }
+  .btn{
+    border:none; border-radius:6px; cursor:pointer; font-weight:700; padding:11px 22px;
+    font-size:.9rem; transition:.15s;
+  }
+  .btn:hover{ opacity:.9; }
+  .btn-main{ background:var(--accent-deep); color:#fff; }
+  .btn-add{ background:#eef5f2; color:var(--accent-deep); font-size:.76rem; padding:5px 12px; }
+  .btn-dl{ background:#2e7d46; color:#fff; padding:13px 28px; font-size:.95rem; }
+  .actions{ text-align:center; margin:22px 0; }
+  #preview{
+    display:none; margin-top:16px; background:#1c2128; color:#d7dee5; padding:18px;
+    border-radius:8px; white-space:pre-wrap; font-family:'SF Mono',Consolas,monospace;
+    font-size:.74rem; max-height:480px; overflow:auto;
+  }
+  #dlzone{ display:none; text-align:center; margin-top:16px; }
+  .note{
+    margin-top:10px; padding:10px 14px; background:#fff6e6; border:1px solid #f0dca6;
+    border-radius:6px; font-size:.78rem; color:#8a6300;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Generador de Fichas WikiTaxa</h1>
+  <p class="lead">Elige el tipo de ficha. El código generado ya viene con el diseño final (CSS + estructura) listo para pegar en Wikidot.</p>
+
+  <div class="type-grid">
+    <div class="type-card" data-type="grupo" onclick="selectType('grupo')">
+      <b>Ficha de grupo</b>
+      <span>Género hacia arriba (Orden, Familia, etc.). Incluye árbol de Grupos subordinados.</span>
+    </div>
+    <div class="type-card" data-type="especie" onclick="selectType('especie')">
+      <b>Ficha de especie</b>
+      <span>Completa: determinación, sinónimos, material en colección, galería propia.</span>
+    </div>
+    <div class="type-card" data-type="abrev" onclick="selectType('abrev')">
+      <b>Ficha de especie (abreviada)</b>
+      <span>Basada en imágenes: Clasificación, Galería, Determinación, Distribución, Referencias.</span>
+    </div>
+  </div>
+
+  <!-- ================= PANEL GRUPO ================= -->
+  <div class="panel" id="panel-grupo">
+    <div class="card">
+      <div class="section-title">1. Identificación y autoría</div>
+      <div class="row c3">
+        <div><label>Rango <span class="hint">Ej: Orden</span></label><input type="text" id="g_rango" placeholder="Orden"></div>
+        <div><label>Nombre del grupo <span class="hint">Ej: Amphipoda</span></label><input type="text" id="g_nombre" placeholder="Amphipoda"></div>
+        <div></div>
+      </div>
+      <div class="row c2">
+        <div><label>Autor de la ficha</label><input type="text" id="g_autor_nom"></div>
+        <div><label>Afiliación</label><input type="text" id="g_autor_inst"></div>
+      </div>
+      <div class="row c2">
+        <div><label>URL foto principal</label><input type="text" id="g_foto_url"></div>
+        <div><label>Título de la foto <span class="hint">Especie + autor + año que aparece en la foto</span></label><input type="text" id="g_foto_title"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">2. Clasificación <span class="hint" style="color:#8a6300">Solo los rangos POR ENCIMA del rango del grupo (ej: si es Orden, llega hasta Superorden).</span></div>
+      <div class="taxa-grid">
+        <input type="text" id="g_t1" value="Reino "><input type="text" id="g_t2" value="Phylum "><input type="text" id="g_t3" value="Subphylum "><input type="text" id="g_t4" value="Superclase ">
+        <input type="text" id="g_t5" value="Clase "><input type="text" id="g_t6" value="Subclase "><input type="text" id="g_t7" value="Superorden "><input type="text" id="g_t8" value="Orden ">
+        <input type="text" id="g_t9" value="Suborden "><input type="text" id="g_t10" value="Infraorden "><input type="text" id="g_t11" value="Superfamilia "><input type="text" id="g_t12" value="Familia ">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3. Grupos subordinados</div>
+      <label>Árbol taxonómico <span class="hint">Pega la lista con el mismo formato de siempre: asteriscos anidados por sangría, ej.
+* [[[Suborden X]]]&#10; * [[[Infraorden Y]]]&#10;  * [[[Familia Z]]]&#10;   * [[[Genero especie Autor, Año]]]. Las especies (líneas sin palabra de rango al inicio) se detectan solas y se les aplica la cursiva correcta automáticamente.</span></label>
+      <textarea class="mono" id="g_tree" style="height:220px" placeholder="* [[[Suborden Amphilochidea]]]
+ * [[[Infraorden Amphilochida]]]
+..."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="section-title">4. Contenido</div>
+      <label>Antecedentes</label><textarea id="g_antecedentes" style="height:80px"></textarea>
+      <label style="margin-top:12px">Reconocimiento</label><textarea id="g_reconocimiento" style="height:80px"></textarea>
+      <label style="margin-top:12px">Caracteres diagnósticos <span class="hint">Uno por línea, se agregan como viñetas.</span></label><textarea id="g_diag" style="height:90px" placeholder="Caparazón ausente...
+Pereópodos ordenados..."></textarea>
+      <label style="margin-top:12px">Distribución</label><textarea id="g_distribucion" style="height:60px"></textarea>
+      <label style="margin-top:12px">Referencias <span class="hint">Una por línea.</span></label><textarea id="g_referencias" style="height:80px"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="section-title">5. Galería <span class="hint" style="color:#8a6300">Enlaces a los grupos subordinados mejor representados (familias, especies destacadas), con foto.</span></div>
+      <div id="g_gallery_slots"></div>
+      <button class="btn btn-add" onclick="addGallerySlot('grupo')">+ Agregar otra imagen</button>
+    </div>
+  </div>
+
+  <!-- ================= PANEL ESPECIE COMPLETA ================= -->
+  <div class="panel" id="panel-especie">
+    <div class="card">
+      <div class="section-title">1. Identificación y autoría</div>
+      <div class="row c2">
+        <div><label>Especie + Autor, Año <span class="hint">Ej: Aegla rostrata Jara, 1977</span></label><input type="text" id="e_titulo" placeholder="Genero especie Autor, Año"></div>
+        <div></div>
+      </div>
+      <div class="row c2">
+        <div><label>Autor de la ficha</label><input type="text" id="e_autor_nom"></div>
+        <div><label>Afiliación</label><input type="text" id="e_autor_inst"></div>
+      </div>
+      <div class="row c2">
+        <div><label>URL foto principal (portada)</label><input type="text" id="e_foto_url"></div>
+        <div><label>Ancho <span class="hint">px, como en el original (ej: 660)</span></label><input type="text" id="e_foto_ancho" value="660"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">2. Enlaces a bases de datos externas <span class="hint" style="color:#8a6300">Deja en blanco las que no correspondan.</span></div>
+      <div class="row c4">
+        <div><label>DECANET (URL)</label><input type="text" id="e_db_decanet"></div>
+        <div><label>GBIF (URL)</label><input type="text" id="e_db_gbif"></div>
+        <div><label>EOL (URL)</label><input type="text" id="e_db_eol"></div>
+        <div><label>iNaturalist (URL)</label><input type="text" id="e_db_inat"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3. Sinónimos y nombres</div>
+      <div class="row c2">
+        <div><label>Sinónimos</label><input type="text" id="e_sinonimos"></div>
+        <div><label>Nombres técnicos</label><input type="text" id="e_tecnicos"></div>
+      </div>
+      <div class="row c2">
+        <div><label>Nombres comunes</label><input type="text" id="e_comunes"></div>
+        <div><label>Nombres locales</label><input type="text" id="e_locales"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">4. Clasificación <span class="hint" style="color:#8a6300">Hasta Género inclusive.</span></div>
+      <div class="taxa-grid">
+        <input type="text" id="e_t1" value="Reino "><input type="text" id="e_t2" value="Phylum "><input type="text" id="e_t3" value="Subphylum "><input type="text" id="e_t4" value="Clase ">
+        <input type="text" id="e_t5" value="Orden "><input type="text" id="e_t6" value="Suborden "><input type="text" id="e_t7" value="Infraorden "><input type="text" id="e_t8" value="Familia ">
+        <input type="text" id="e_t9" value="Subfamilia "><input type="text" id="e_t10" value="Tribu "><input type="text" id="e_t11" value="Subtribu "><input type="text" id="e_t12" value="Género ">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">5. Contenido</div>
+      <label>Antecedentes</label><textarea id="e_antecedentes" style="height:70px"></textarea>
+      <label style="margin-top:12px">Reconocimiento</label><textarea id="e_reconocimiento" style="height:90px"></textarea>
+      <label style="margin-top:12px">Caracteres diagnósticos <span class="hint">Uno por línea.</span></label><textarea id="e_diag" style="height:100px"></textarea>
+      <label style="margin-top:12px">Distribución</label><textarea id="e_distribucion" style="height:70px"></textarea>
+      <label style="margin-top:12px">Otros antecedentes</label><textarea id="e_otros" style="height:70px"></textarea>
+      <label style="margin-top:12px">Referencias <span class="hint">Una por línea. Para agregar un enlace tipo (PDF), escribe al final: [*url texto]</span></label>
+      <textarea id="e_referencias" style="height:90px"></textarea>
+      <label style="margin-top:12px">Material en colección MNHN <span class="hint">Una línea por lote: código y descripción.</span></label>
+      <textarea id="e_material" style="height:70px" placeholder="(MNHNCL DEC-10721): 2 machos."></textarea>
+    </div>
+
+    <div class="card">
+      <div class="section-title">6. Galería <span class="hint" style="color:#8a6300">La numeración de figuras es automática — no la escribas tú.</span></div>
+      <div id="e_gallery_slots"></div>
+      <button class="btn btn-add" onclick="addGallerySlot('especie')">+ Agregar otra imagen</button>
+    </div>
+  </div>
+
+  <!-- ================= PANEL ESPECIE ABREVIADA ================= -->
+  <div class="panel" id="panel-abrev">
+    <div class="card">
+      <div class="section-title">1. Identificación y autoría</div>
+      <div class="row c2">
+        <div><label>Especie + Autor, Año</label><input type="text" id="a_titulo" placeholder="Genero especie Autor, Año"></div>
+        <div></div>
+      </div>
+      <div class="row c2">
+        <div><label>Autor de la ficha</label><input type="text" id="a_autor_nom"></div>
+        <div><label>Afiliación</label><input type="text" id="a_autor_inst"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">2. Clasificación <span class="hint" style="color:#8a6300">Hasta Género inclusive.</span></div>
+      <div class="taxa-grid">
+        <input type="text" id="a_t1" value="Reino "><input type="text" id="a_t2" value="Phylum "><input type="text" id="a_t3" value="Subphylum "><input type="text" id="a_t4" value="Clase ">
+        <input type="text" id="a_t5" value="Orden "><input type="text" id="a_t6" value="Suborden "><input type="text" id="a_t7" value="Infraorden "><input type="text" id="a_t8" value="Familia ">
+        <input type="text" id="a_t9" value="Subfamilia "><input type="text" id="a_t10" value="Tribu "><input type="text" id="a_t11" value="Subtribu "><input type="text" id="a_t12" value="Género ">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">3. Galería <span class="hint" style="color:#8a6300">Aquí SÍ escribe tú "Figura 1.", "Figura 2." al inicio de cada leyenda (numeración manual, como en tu formato original).</span></div>
+      <div id="a_gallery_slots"></div>
+      <button class="btn btn-add" onclick="addGallerySlot('abrev')">+ Agregar otra imagen</button>
+    </div>
+
+    <div class="card">
+      <div class="section-title">4. Contenido</div>
+      <label>Determinación</label><textarea id="a_det" style="height:110px"></textarea>
+      <label style="margin-top:12px">Distribución</label><textarea id="a_dist" style="height:80px"></textarea>
+      <label style="margin-top:12px">Referencias recomendadas <span class="hint">Una por línea.</span></label>
+      <textarea id="a_refs" style="height:90px"></textarea>
+    </div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn btn-main" onclick="generate()">Generar código</button>
+  </div>
+  <div class="note" id="pending-note" style="display:none">Elige un tipo de ficha arriba para empezar.</div>
+
+  <pre id="preview"></pre>
+  <div id="dlzone">
+    <button class="btn btn-dl" onclick="downloadTxt()">Descargar ficha (.txt)</button>
+  </div>
+</div>
+
+<script>
+/* ===================== DATOS COMPARTIDOS ===================== */
+const RANKS = ['Superfamilia','Subfamilia','Epifamilia','Parvorden','Infraorden','Suborden',
+  'Superorden','Subclase','Clase','Superclase','Subphylum','Phylum','Reino','Familia',
+  'Tribu','Subtribu','Género','Genero','Orden'];
+const RANKS_SORTED = [...RANKS].sort((a,b)=>b.length-a.length);
+
+let currentType = null;
+let gallerySlotCount = { grupo:0, especie:0, abrev:0 };
+
+/* ===================== UTILIDADES ===================== */
+function splitBinomial(full){
+  const m = full.trim().match(/^(\S+)\s+(\S+)\s*([\s\S]*)$/);
+  if(!m) return null;
+  return { genus:m[1], epithet:m[2], rest:m[3].trim() };
+}
+function isRankLine(text){
+  const t = text.trim();
+  return RANKS_SORTED.some(r => t.startsWith(r + ' '));
+}
+function bulletize(text, prefix){
+  return text.split('\n').map(l=>l.trim()).filter(l=>l.length>0)
+    .map(l=> (prefix||'* ') + l).join('\n');
+}
+function buildClassificationChain(idPrefix){
+  let parts = [];
+  for(let i=1;i<=12;i++){
+    const el = document.getElementById(idPrefix+i);
+    if(!el) continue;
+    const val = el.value.trim();
+    const words = val.split(/\s+/);
+    if(words.length>1 && words[1].length>0){
+      parts.push('[[[' + val + ']]]');
+    }
+  }
+  return parts.join(': ');
+}
+/* Procesa el arbol de Grupos subordinados: detecta lineas de especie
+   (sin palabra de rango al inicio) y las reescribe como DOS enlaces
+   adyacentes al mismo destino, para lograr cursiva solo en genero+especie
+   sin que Wikidot rompa el formato (no interpreta //cursiva// dentro
+   del alias de un enlace). */
+function processTree(raw){
+  return raw.split('\n').map(line=>{
+    const m = line.match(/^(\s*\*?\s*)\[\[\[([^\]]+)\]\]\](.*)$/);
+    if(!m) return line;
+    const [, prefix, text, suffix] = m;
+    const trimmed = text.trim();
+    if(isRankLine(trimmed)) return line;
+    const bin = splitBinomial(trimmed);
+    if(!bin) return line;
+    const binomial = bin.genus + ' ' + bin.epithet;
+    let repl;
+    if(bin.rest){
+      repl = '[[[' + trimmed + ' | ' + binomial + ']]] [[[' + trimmed + ' | ' + bin.rest + ']]]';
+    } else {
+      repl = '[[[' + trimmed + ' | ' + binomial + ']]]';
+    }
+    return prefix + repl + suffix;
+  }).join('\n');
+}
+/* Titulo de especie: separa genero+especie (cursiva) del autor/año */
+function parseSpeciesTitle(raw){
+  const words = raw.trim().split(/\s+/);
+  if(words.length<2) return { binomial: raw.trim(), authority: '' };
+  return { binomial: words[0]+' '+words[1], authority: words.slice(2).join(' ') };
+}
+
+/* ===================== GALERIA: SLOTS DINAMICOS ===================== */
+function addGallerySlot(type){
+  gallerySlotCount[type]++;
+  const n = gallerySlotCount[type];
+  const container = document.getElementById(
+    type==='grupo' ? 'g_gallery_slots' : type==='especie' ? 'e_gallery_slots' : 'a_gallery_slots'
+  );
+  const div = document.createElement('div');
+  div.className = 'gallery-slot';
+  let captionField = '';
+  if(type==='abrev'){
+    captionField = '<label>Leyenda completa <span class="hint">Incluye tú "Figura '+n+'." al inicio, y //cursiva// para el nombre científico si corresponde.</span></label>' +
+      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px">Figura '+n+'. </textarea>';
+  } else if(type==='especie'){
+    captionField = '<label>Descripción de la imagen <span class="hint">Sin el nombre científico: se agrega solo, a partir del título. Ej: macho paratipo, vista dorsal.</span></label>' +
+      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px"></textarea>';
+  } else {
+    captionField = '<label>Texto del enlace <span class="hint">Nombre del grupo o especie tal como debe llamarse la página. Ej: Familia Falklandellidae</span></label>' +
+      '<input type="text" id="'+type[0]+'_pie'+n+'">';
+  }
+  div.innerHTML =
+    '<h4>Imagen '+n+'</h4>' +
+    '<div class="row c2"><div><label>URL de la imagen</label><input type="text" id="'+type[0]+'_img'+n+'"></div><div>'+captionField+'</div></div>';
+  container.appendChild(div);
+}
+
+/* ===================== SELECCION DE TIPO ===================== */
+function selectType(type){
+  currentType = type;
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.toggle('active', c.dataset.type===type));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+type).classList.add('active');
+  document.getElementById('actions').style.display='block';
+  document.getElementById('pending-note').style.display='none';
+  document.getElementById('preview').style.display='none';
+  document.getElementById('dlzone').style.display='none';
+  // agrega automaticamente 2 slots de galeria si el panel esta vacio
+  const key = type;
+  if(gallerySlotCount[key]===0){
+    addGallerySlot(key);
+    addGallerySlot(key);
+  }
+}
+
+/* ===================== GENERADORES POR TIPO ===================== */
+function buildGalleryWikitext(type, prefix, cols){
+  const n = gallerySlotCount[type];
+  let rows = [];
+  for(let i=1;i<=n;i+=cols){
+    let cells = [];
+    for(let j=i;j<i+cols && j<=n;j++){
+      const url = (document.getElementById(prefix+'img'+j)||{}).value || '';
+      if(!url){ cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n[[/cell]]'); continue; }
+      let caption = '';
+      if(type==='abrev'){
+        caption = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+      } else if(type==='especie'){
+        const t = parseSpeciesTitle(document.getElementById('e_titulo').value||'');
+        const desc = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+        caption = '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' ('+desc+')' : '');
+      } else { // grupo
+        const linkText = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+        if(linkText){
+          if(isRankLine(linkText)){
+            caption = '[[['+linkText+']]]';
+          } else {
+            const bin = splitBinomial(linkText);
+            if(bin){
+              const binomial = bin.genus+' '+bin.epithet;
+              caption = bin.rest
+                ? '[[['+linkText+' | '+binomial+']]] [[['+linkText+' | '+bin.rest+']]]'
+                : '[[['+linkText+' | '+binomial+']]]';
+            } else {
+              caption = '[[['+linkText+']]]';
+            }
+          }
+        }
+      }
+      cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n' +
+        '[[image '+url+' width="100%" alt="Imagen '+j+'" link="*'+url+'"]]' +
+        (caption ? '\n'+caption : '') + '\n[[/cell]]');
+    }
+    rows.push('[[row]]\n'+cells.join('\n')+'\n[[/row]]');
+  }
+  return '[[table style="width: 100%; margin: 0; padding: 0; border-collapse: collapse;"]]\n\n' +
+    rows.join('\n\n') + '\n\n[[/table]]';
+}
+
+function buildGrupoCode(){
+  const rango = document.getElementById('g_rango').value.trim();
+  const nombre = document.getElementById('g_nombre').value.trim();
+  const foto_url = document.getElementById('g_foto_url').value.trim();
+  const foto_title = document.getElementById('g_foto_title').value.trim();
+  const chain = buildClassificationChain('g_t');
+  const tree = processTree(document.getElementById('g_tree').value);
+  const gallery = buildGalleryWikitext('grupo','g_',4);
+
+  let heroBlock = '';
+  if(foto_url){
+    heroBlock =
+`[[div class="ficha-hero"]]
+[[<image ${foto_url} width="100%" title="${foto_title}"]]
+[[/div]]
+
+`;
+  }
+
+  return `[[module css]]
+${GROUP_CSS}
+[[/module]]
+
+[[div class="ficha-taxon"]]
+[[div class="ficha-title"]]
+[[span class="ficha-type-label"]]Ficha de grupo[[/span]]
+
+[[span class="order-name"]]${rango} ${nombre}[[/span]]
+[[/div]]
+
+${heroBlock}[[div class="ficha-author"]]
+**${document.getElementById('g_autor_nom').value}**
+//${document.getElementById('g_autor_inst').value}//
+[[/div]]
+------
+
+++ Clasificación:
+[[div class="taxo-line"]]
+${chain}
+[[/div]]
+
+------
+
+++ Grupos subordinados
+[[div class="tax-tree-wrap"]]
+${tree}
+[[/div]]
+
+------
+
+++ Antecedentes:
+[[div class="prose"]]
+${document.getElementById('g_antecedentes').value}
+[[/div]]
+
+------
+
+++ Reconocimiento:
+[[div class="prose"]]
+${document.getElementById('g_reconocimiento').value}
+[[/div]]
+
+------
+
+++ Caracteres diagnósticos:
+[[div class="diag-box"]]
+${bulletize(document.getElementById('g_diag').value)}
+[[/div]]
+
+------
+
+++ Distribución:
+${document.getElementById('g_distribucion').value}
+
+------
+
+++ Referencias:
+[[div class="refs"]]
+${bulletize(document.getElementById('g_referencias').value)}
+[[/div]]
+
+------
+
+++ Galería:
+
+[[div class="gallery-wrap"]]
+${gallery}
+[[/div]]
+[[/div]]
+`;
+}
+
+function buildEspecieCode(){
+  const t = parseSpeciesTitle(document.getElementById('e_titulo').value);
+  const chain = buildClassificationChain('e_t');
+  const gallery = buildGalleryWikitext('especie','e_',2);
+  const foto_url = document.getElementById('e_foto_url').value.trim();
+  const foto_ancho = document.getElementById('e_foto_ancho').value.trim() || '660';
+
+  let dbLinks = [];
+  const dbMap = [['e_db_decanet','DECANET'],['e_db_gbif','GBIF'],['e_db_eol','EOL'],['e_db_inat','INaturalist']];
+  dbMap.forEach(([id,label])=>{
+    const url = document.getElementById(id).value.trim();
+    if(url) dbLinks.push('[*'+url+' '+label+']');
+  });
+
+  return `[[module css]]
+${SPECIES_CSS}
+[[/module]]
+
+[[div class="ficha-taxon ficha-especie"]]
+[[div class="ficha-hero"]]
+[[f>image ${foto_url} width="${foto_ancho}" style="float: right;" title="${t.binomial} ${t.authority}"]]
+[[/div]]
+
+[[div class="ficha-title"]]
+[[span class="ficha-type-label"]]Ficha de especie[[/span]]
+
+[[span class="order-name"]]${t.binomial}[[/span]]
+
+[[span class="taxon-authority"]]${t.authority}[[/span]]
+[[/div]]
+
+[[div class="ficha-author"]]
+**${document.getElementById('e_autor_nom').value}**
+//${document.getElementById('e_autor_inst').value}//
+[[/div]]
+------
+
+[[div class="ficha-dbrefs"]]
+${dbLinks.join(' ')}
+[[/div]]
+
+------
+[[div class="ficha-names"]]
+**Sinónimos:** ${document.getElementById('e_sinonimos').value}
+**Nombres técnicos:** ${document.getElementById('e_tecnicos').value}
+**Nombres comunes:** ${document.getElementById('e_comunes').value}
+**Nombres locales:** ${document.getElementById('e_locales').value}
+[[/div]]
+
+------
+
+++ Clasificación:
+[[div class="taxo-line"]]
+${chain}
+[[/div]]
+
+------
+
+++ Antecedentes:
+[[div class="prose"]]
+${document.getElementById('e_antecedentes').value}
+[[/div]]
+
+------
+
+++ Reconocimiento:
+[[div class="prose"]]
+${document.getElementById('e_reconocimiento').value}
+[[/div]]
+
+------
+
+++ Caracteres diagnósticos:
+[[div class="diag-box"]]
+${bulletize(document.getElementById('e_diag').value)}
+[[/div]]
+
+------
+
+++ Distribución:
+[[div class="prose"]]
+${document.getElementById('e_distribucion').value}
+[[/div]]
+
+------
+
+++ Otros antecedentes:
+[[div class="prose"]]
+${document.getElementById('e_otros').value}
+[[/div]]
+
+------
+
+++ Referencias:
+[[div class="refs"]]
+${bulletize(document.getElementById('e_referencias').value)}
+[[/div]]
+
+------
+
+++ Material en colección MNHN:
+[[div class="material-box"]]
+${bulletize(document.getElementById('e_material').value, '**'+t.binomial+' '+t.authority+'** ')}
+[[/div]]
+
+------
+
+++ Galería:
+
+[[div class="gallery-wrap gallery-2col"]]
+${gallery}
+[[/div]]
+[[/div]]
+`;
+}
+
+function buildAbrevCode(){
+  const t = parseSpeciesTitle(document.getElementById('a_titulo').value);
+  const chain = buildClassificationChain('a_t');
+  const gallery = buildGalleryWikitext('abrev','a_',2);
+
+  return `[[module css]]
+${ABREV_CSS}
+[[/module]]
+
+[[div class="ficha-taxon ficha-especie ficha-especie-abrev"]]
+[[div class="ficha-title"]]
+[[span class="ficha-type-label"]]Ficha de especie · abreviada[[/span]]
+
+[[span class="order-name"]]${t.binomial}[[/span]]
+
+[[span class="taxon-authority"]]${t.authority}[[/span]]
+[[/div]]
+
+[[div class="ficha-author"]]
+**${document.getElementById('a_autor_nom').value}**
+//${document.getElementById('a_autor_inst').value}//
+[[/div]]
+------
+
+++ Clasificación:
+[[div class="taxo-line"]]
+${chain}
+[[/div]]
+
+------
+
+[[div class="gallery-wrap gallery-2col"]]
+${gallery}
+[[/div]]
+
+------
+
+++ Determinación:
+[[div class="prose"]]
+${document.getElementById('a_det').value}
+[[/div]]
+
+------
+
+++ Distribución:
+[[div class="prose"]]
+${document.getElementById('a_dist').value}
+[[/div]]
+
+------
+
+++ Referencias recomendadas:
+[[div class="refs"]]
+${bulletize(document.getElementById('a_refs').value)}
+[[/div]]
+[[/div]]
+`;
+}
+
+/* ===================== GENERAR / DESCARGAR ===================== */
+function generate(){
+  if(!currentType) return;
+  let code = '';
+  if(currentType==='grupo') code = buildGrupoCode();
+  else if(currentType==='especie') code = buildEspecieCode();
+  else code = buildAbrevCode();
+
+  // limpieza: colapsa mas de 2 saltos de linea seguidos
+  code = code.replace(/\n{3,}/g, '\n\n');
+
+  const pre = document.getElementById('preview');
+  pre.textContent = code;
+  pre.style.display = 'block';
+  document.getElementById('dlzone').style.display = 'block';
+  if(pre.scrollIntoView) pre.scrollIntoView({behavior:'smooth'});
+}
+function downloadTxt(){
+  const code = document.getElementById('preview').textContent;
+  const blob = new Blob([code], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  let base = 'ficha';
+  if(currentType==='grupo') base = (document.getElementById('g_nombre').value||'grupo').toLowerCase();
+  else if(currentType==='especie') base = (document.getElementById('e_titulo').value.split(' ')[0]||'especie').toLowerCase();
+  else base = (document.getElementById('a_titulo').value.split(' ')[0]||'especie').toLowerCase();
+  a.download = 'ficha_'+base.replace(/[^a-z0-9]+/g,'-')+'.txt';
+  a.click();
+}
+
+document.getElementById('pending-note').style.display='block';
+
+/* ===================== CSS EMBEBIDO (los 3 ya validados) ===================== */
+const GROUP_CSS = `/* =====================================================================
+   ESTILO 'FICHA DE ESPECIMEN' PARA FICHAS DE GRUPO DE WIKITAXA (v2)
+   -----------------------------------------------------------------------
+   Se aplica SOLO dentro del bloque div de clase 'ficha-taxon'.
+   No modifica el código wiki funcional: los enlaces [[[...]]] siguen
+   siendo procesados por Wikidot, que sigue coloreando automáticamente
+   página-existente vs página-por-crear vía la clase a.newpage.
+
+   IMPORTANTE sobre tamaños: el tema del sitio probablemente redefine el
+   font-size del elemento <html> (p.ej. a 62.5%), lo que hace que 'rem'
+   salga mucho más chico de lo esperado. Por eso aquí todo está anclado
+   con un font-size explícito en píxeles sobre .ficha-taxon y las
+   proporciones internas usan 'em' (relativas a ese ancla), no 'rem'.
+   También se usa !important en tipografía para ganarle a reglas del
+   tema que suelen estar más especificas (p.ej. '#page-content p').
+
+   CÓMO INSTALARLO: pega este bloque completo dentro de
+   [[module css]] ... aquí el CSS ... [[/module]]
+   justo antes del bloque div de clase 'ficha-taxon'.
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+/* Bloqueo de scroll horizontal a nivel de pagina completa: el scroll
+   persistia aunque el contenedor de la ficha ya tenia overflow-x:hidden,
+   lo que indica que el desborde (minimo, unos pocos pixeles) ocurre a
+   nivel del documento/tema, no dentro del propio div de la ficha. */
+html, body{ overflow-x:hidden !important; max-width:100% !important; }
+
+.ficha-taxon{
+  --paper:#F1ECDD;
+  --card:#FBF8EE;
+  --ink:#232A1F;
+  --ink-soft:#565C4C;
+  --ink-faint:#8A8570;
+  --teal:#2C5F52;
+  --teal-deep:#1B3D34;
+  --rust:#A8462E;
+  --sand:#B98A3B;
+  --line:#CBC0A0;
+  --line-soft:#DCD3B8;
+  --exists:#2E7D46;   /* pagina creada  -> verde  */
+  --missing:#8A8570;  /* pagina por crear -> gris */
+  --shadow: 0 1px 2px rgba(34,29,15,.06), 0 6px 20px -8px rgba(34,29,15,.18);
+
+  max-width:1200px !important;
+  margin:0 auto !important;
+  font-size:16px !important;   /* ancla: todo lo de abajo usa em sobre esta base */
+  font-family:'Source Sans 3', ui-sans-serif, system-ui, sans-serif !important;
+  color:var(--ink) !important;
+  line-height:1.6 !important;
+  overflow-x:hidden;
+}
+
+.ficha-taxon *{ box-sizing:border-box; min-width:0; overflow-wrap:break-word; word-break:break-word; }
+
+.ficha-taxon hr{
+  clear:both !important;
+  border:none !important;
+  border-top:1px solid var(--line) !important;
+  margin:28px 0 !important;
+}
+
+/* ---------- Título + foto en dos columnas (floats entre hermanos, sin div envolvente) ---------- */
+.ficha-title{
+  float:left;
+  width:36%;
+  padding:6px 0;
+  box-sizing:border-box;
+}
+.ficha-hero{
+  float:right;
+  width:60%;
+  box-sizing:border-box;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:4px;
+  box-shadow:var(--shadow);
+  padding:14px;
+  text-align:center;
+}
+@media (max-width:800px){
+  .ficha-title, .ficha-hero{ float:none; width:100%; margin-bottom:16px; }
+}
+.ficha-type-label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:.85em !important;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--sand) !important;
+  margin-bottom:8px;
+}
+.order-name{
+  display:block;
+  font-family:'Fraunces', serif !important;
+  font-style:italic;
+  font-weight:500;
+  font-size:3.1em !important;
+  line-height:1.02;
+  color:var(--teal-deep) !important;
+  letter-spacing:-.01em;
+}
+@media (max-width:640px){
+  .order-name{ font-size:2.2em !important; }
+}
+.ficha-hero img{
+  width:auto !important;
+  max-width:100% !important;
+  height:auto !important;
+  max-height:520px;
+  object-fit:contain !important;
+  display:inline-block;
+  background:var(--teal-deep);
+  border-radius:2px;
+}
+
+/* ---------- Autoria (parrafo autor + afiliacion, justo debajo del titulo) ---------- */
+.ficha-author{
+  clear:both;
+  margin:18px 0 8px;
+}
+.ficha-author strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:700 !important;
+  font-size:1.3em !important;
+  color:var(--ink) !important;
+}
+.ficha-author em{
+  display:block;
+  font-family:'Source Sans 3', sans-serif !important;
+  font-style:italic !important;
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  margin-top:3px;
+}
+
+/* ---------- Encabezados de seccion (++ ...) ---------- */
+.ficha-taxon h2{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-style:normal !important;
+  font-size:1.9em !important;
+  color:var(--ink) !important;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+  margin:50px 0 20px !important;
+}
+
+/* ---------- Clasificacion: etiquetas tipo pildora ---------- */
+.taxo-line{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 4px;
+  font-size:1.3em !important;
+  font-weight:700;
+  color:var(--rust) !important;
+  font-family:'Fraunces', serif !important;
+}
+.taxo-line a{
+  display:inline-block;
+  text-decoration:none !important;
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.75em !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:20px;
+  padding:.45em .95em;
+  color:var(--exists) !important;
+  transition:background .15s ease, color .15s ease;
+}
+.taxo-line a:hover{ background:var(--teal); color:#fff !important; }
+.taxo-line a.newpage{
+  color:var(--missing) !important;
+  border-style:dashed;
+  background:var(--paper);
+}
+.taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+
+/* ---------- Grupos subordinados: arbol sistematico ---------- */
+.tax-tree-wrap{
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:26px clamp(12px,3vw,30px);
+}
+.tax-tree-wrap ul{
+  list-style:none;
+  margin:0;
+  padding-left:20px;
+  border-left:1px dashed var(--line);
+}
+.tax-tree-wrap > ul{
+  padding-left:0;
+  border-left:none;
+  column-count:2;
+  column-gap:40px;
+  column-rule:1px solid var(--line-soft);
+}
+@media (max-width:820px){
+  .tax-tree-wrap > ul{ column-count:1; }
+}
+.tax-tree-wrap li{
+  position:relative;
+  margin:3px 0;
+  padding-left:14px;
+  font-size:1em;
+}
+.tax-tree-wrap > ul > li{
+  padding-left:0;
+  margin:0 0 18px;
+  font-size:1.15em;
+  font-weight:600;
+}
+.tax-tree-wrap a{
+  text-decoration:none !important;
+  font-family:'Fraunces', serif !important;
+  font-weight:500;
+  font-size:1em !important;
+  color:var(--exists) !important;
+  border-bottom:1px solid transparent;
+  transition:border-color .12s ease, color .12s ease;
+}
+.tax-tree-wrap a:hover{ border-bottom-color:var(--rust); color:var(--rust) !important; }
+.tax-tree-wrap a.newpage{
+  color:var(--missing) !important;
+  border-bottom-style:dashed;
+  border-bottom-color:var(--line);
+}
+/* Los nombres de especie ahora se escriben como DOS enlaces adyacentes
+   al mismo destino: el primero muestra 'Genero especie' (se pone en
+   cursiva aqui via CSS) y el segundo 'Autor, Año' (se deja normal).
+   Wikidot no interpreta //cursiva// dentro del alias de un enlace, asi
+   que esta es la unica forma confiable de lograrlo sin tocar el color
+   de existencia de cada enlace. */
+/* Cursiva SOLO para especies: se detectan porque, a diferencia de
+   rangos/familias (que tienen un unico enlace por li), una especie
+   fue escrita como dos enlaces adyacentes al mismo destino (genero+
+   especie, luego autor+año). Esa es la senal real, no la ausencia
+   de sub-lista (una familia terminal sin especies tambien carece de
+   sub-lista y no debe ir en cursiva). */
+.tax-tree-wrap li > a:first-of-type:has(+ a){ font-style:italic; }
+.tax-tree-wrap li > a + a{ margin-left:.3em; }
+.tax-tree-wrap p{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:1.1em !important;
+  color:var(--teal-deep) !important;
+  margin:16px 0 4px !important;
+}
+
+/* ---------- Nota (leyenda al final del arbol) ---------- */
+.tree-legend{
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:.85em !important;
+  color:var(--ink-soft) !important;
+  background:var(--paper);
+  border:1px solid var(--line-soft);
+  border-radius:4px;
+  padding:10px 14px;
+  margin-top:16px;
+}
+.tree-legend strong{ color:var(--rust) !important; font-size:1em !important; }
+
+/* ---------- Antecedentes / Reconocimiento: prosa a 2 columnas ---------- */
+.prose{
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  column-count:2;
+  column-gap:48px;
+  column-rule:1px solid var(--line-soft);
+}
+@media (max-width:700px){
+  .prose{ column-count:1; }
+}
+.prose a{
+  text-decoration:none !important;
+  font-weight:600 !important;
+  color:var(--exists) !important;
+  border-bottom:1px dotted var(--sand);
+}
+.prose a:hover{ border-bottom-style:solid; border-bottom-color:var(--rust); }
+.prose a.newpage{
+  color:var(--missing) !important;
+  border-bottom-style:dashed;
+  border-bottom-color:var(--line);
+}
+
+/* ---------- Caracteres diagnosticos: un solo recuadro ---------- */
+.diag-box{
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:22px 26px;
+}
+.diag-box ul{ list-style:none; margin:0; padding:0; }
+.diag-box li{
+  padding:11px 0 11px 22px !important;
+  border-top:1px solid var(--line-soft);
+  font-size:1.02em !important;
+  color:var(--ink-soft) !important;
+  position:relative;
+}
+.diag-box li:first-child{ border-top:none; padding-top:0 !important; }
+.diag-box li:last-child{ padding-bottom:0 !important; }
+.diag-box li::before{
+  content:'◆';
+  color:var(--teal);
+  font-size:.6em;
+  position:absolute;
+  left:0; top:1em;
+}
+.diag-box li:first-child::before{ top:.25em; }
+
+/* ---------- Distribucion: texto normal (sin caja ni etiqueta) ---------- */
+
+/* ---------- Referencias: tamano reducido + sangria francesa ---------- */
+.refs{
+  font-size:.92em !important;
+  color:var(--ink-soft) !important;
+  line-height:1.55;
+}
+.refs p{
+  margin:0 0 .6em !important;
+  padding-left:1.8em !important;
+  text-indent:-1.8em !important;
+}
+
+/* ---------- Galeria: tabla -> grilla de tarjetas (4 columnas fijas) ---------- */
+.gallery-wrap table{
+  display:grid !important;
+  grid-template-columns:repeat(4, 1fr) !important;
+  gap:22px !important;
+  width:100% !important;
+  border-collapse:separate !important;
+}
+@media (max-width:900px){
+  .gallery-wrap table{ grid-template-columns:repeat(2, 1fr) !important; }
+}
+@media (max-width:500px){
+  .gallery-wrap table{ grid-template-columns:1fr !important; }
+}
+.gallery-wrap tbody, .gallery-wrap tr{ display:contents !important; }
+.gallery-wrap td{
+  display:block !important;
+  width:auto !important;
+  vertical-align:top;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:5px;
+  padding:12px !important;
+  box-shadow:var(--shadow);
+}
+.gallery-wrap td:empty{ display:none !important; }
+.gallery-wrap strong{
+  display:block;
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.95em !important;
+  color:var(--ink) !important;
+  margin-bottom:8px;
+}
+.gallery-wrap strong em{
+  font-style:italic;
+  color:var(--exists) !important;
+}
+.gallery-wrap img{
+  width:100% !important;
+  height:270px;
+  object-fit:contain !important;
+  background:var(--teal-deep);
+  border-radius:3px;
+  display:block;
+}
+`;
+const SPECIES_CSS = `/* =====================================================================
+   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE (v1)
+   -----------------------------------------------------------------------
+   Mismas reglas aprendidas con la Ficha de taxon: max 2 niveles de
+   anidamiento de divs, comillas simples exclusivamente, hr con
+   clear:both, sin modificar ningun [[[...]]] excepto el truco de dos
+   enlaces adyacentes para especies (aqui no aplica: no hay arbol).
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+html, body{ overflow-x:hidden !important; max-width:100% !important; }
+
+.ficha-especie{
+  --paper:#F1ECDD;
+  --card:#FBF8EE;
+  --ink:#232A1F;
+  --ink-soft:#565C4C;
+  --ink-faint:#8A8570;
+  --teal:#2C5F52;
+  --teal-deep:#1B3D34;
+  --rust:#A8462E;
+  --sand:#B98A3B;
+  --line:#CBC0A0;
+  --line-soft:#DCD3B8;
+  --exists:#2E7D46;
+  --missing:#8A8570;
+  --shadow: 0 1px 2px rgba(34,29,15,.06), 0 6px 20px -8px rgba(34,29,15,.18);
+
+  max-width:1200px !important;
+  margin:0 auto !important;
+  font-size:16px !important;
+  font-family:'Source Sans 3', ui-sans-serif, system-ui, sans-serif !important;
+  color:var(--ink) !important;
+  line-height:1.6 !important;
+  overflow-x:hidden;
+}
+.ficha-especie *{ box-sizing:border-box; min-width:0; overflow-wrap:break-word; word-break:break-word; }
+.ficha-especie hr{
+  clear:both !important;
+  border:none !important;
+  border-top:1px solid var(--line) !important;
+  margin:28px 0 !important;
+}
+.ficha-especie h2{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-style:normal !important;
+  font-size:1.9em !important;
+  color:var(--ink) !important;
+  border-bottom:1px solid var(--line);
+  padding-bottom:10px;
+  margin:50px 0 20px !important;
+}
+
+/* ---------- Foto principal (float nativo de [[f>image]], solo se enmarca) ---------- */
+.ficha-hero{
+  float:right;
+  width:52%;
+  margin:0 0 20px 28px !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:4px;
+  box-shadow:var(--shadow);
+  padding:14px !important;
+  box-sizing:border-box !important;
+}
+.ficha-hero *{
+  float:none !important;
+}
+.ficha-hero > *{
+  width:100% !important;
+  max-width:100% !important;
+  margin:0 !important;
+}
+.ficha-hero img{
+  width:100% !important;
+  max-width:100% !important;
+  height:auto !important;
+  max-height:600px;
+  object-fit:contain !important;
+  object-position:center !important;
+  display:block !important;
+  margin:0 !important;
+  background:var(--teal-deep);
+  border-radius:2px;
+}
+@media (max-width:760px){
+  .ficha-hero{ float:none; width:100%; margin:0 0 16px !important; }
+}
+
+/* ---------- Titulo (rango + nombre en cursiva + autoria) ---------- */
+.ficha-title{ padding:6px 0; }
+.ficha-type-label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:.85em !important;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--sand) !important;
+  margin-bottom:8px;
+}
+.order-name{
+  display:block;
+  font-family:'Fraunces', serif !important;
+  font-style:italic;
+  font-weight:500;
+  font-size:3em !important;
+  line-height:1;
+  color:var(--teal-deep) !important;
+  letter-spacing:-.01em;
+}
+.taxon-authority{
+  display:block;
+  font-family:'Source Sans 3', sans-serif !important;
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  margin-top:4px;
+}
+
+/* ---------- Autoria ---------- */
+.ficha-author{ clear:none; margin:18px 0 8px; }
+.ficha-author strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:700 !important;
+  font-size:1.2em !important;
+  color:var(--ink) !important;
+}
+.ficha-author em{
+  display:block;
+  font-family:'Source Sans 3', sans-serif !important;
+  font-style:italic !important;
+  font-size:1em !important;
+  color:var(--ink-soft) !important;
+  margin-top:3px;
+}
+
+/* ---------- Enlaces a bases de datos externas (DECANET, GBIF, EOL...) ---------- */
+.ficha-dbrefs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin:16px 0;
+}
+.ficha-dbrefs a{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:1em !important;
+  text-decoration:none !important;
+  letter-spacing:.02em;
+  color:var(--teal-deep) !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:20px;
+  padding:.5em 1.1em;
+}
+.ficha-dbrefs a:hover{ background:var(--teal); color:#fff !important; border-color:var(--teal-deep); }
+
+/* ---------- Sinonimos / nombres ---------- */
+.ficha-names{
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:6px;
+  padding:16px 22px;
+  font-size:1.02em !important;
+  color:var(--ink) !important;
+  line-height:2;
+}
+.ficha-names strong{
+  display:inline-block;
+  min-width:9em;
+  font-family:'IBM Plex Mono', monospace !important;
+  font-weight:600 !important;
+  font-size:.78em !important;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--sand) !important;
+}
+
+/* ---------- Clasificacion: pildoras ---------- */
+.taxo-line{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 4px;
+  font-size:1.3em !important;
+  font-weight:700;
+  color:var(--rust) !important;
+  font-family:'Fraunces', serif !important;
+}
+.taxo-line a{
+  display:inline-block;
+  text-decoration:none !important;
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.7em !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:20px;
+  padding:.45em .95em;
+  color:var(--exists) !important;
+  transition:background .15s ease, color .15s ease;
+}
+.taxo-line a:hover{ background:var(--teal); color:#fff !important; }
+.taxo-line a.newpage{
+  color:var(--missing) !important;
+  border-style:dashed;
+  background:var(--paper);
+}
+.taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+
+/* ---------- Prosa (Antecedentes, Reconocimiento, Distribucion, Otros antecedentes) ----------
+   A diferencia de la ficha de taxon, aqui el texto es corto: se deja en
+   una sola columna, con ancho comodo de lectura, en vez de forzar 2
+   columnas que quedarian mal balanceadas con parrafos tan breves. */
+.prose{
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  max-width:68ch;
+}
+.prose em{ font-style:italic; color:var(--rust); }
+
+/* ---------- Caracteres diagnosticos: un solo recuadro ---------- */
+.diag-box{
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:6px;
+  box-shadow:var(--shadow);
+  padding:22px 26px;
+  clear:both;
+}
+.diag-box ul{ list-style:none; margin:0; padding:0; }
+.diag-box li{
+  padding:11px 0 11px 22px !important;
+  border-top:1px solid var(--line-soft);
+  font-size:1em !important;
+  color:var(--ink-soft) !important;
+  position:relative;
+}
+.diag-box li:first-child{ border-top:none; padding-top:0 !important; }
+.diag-box li:last-child{ padding-bottom:0 !important; }
+.diag-box li::before{
+  content:'◆';
+  color:var(--teal);
+  font-size:.6em;
+  position:absolute;
+  left:0; top:1em;
+}
+.diag-box li:first-child::before{ top:.25em; }
+
+/* ---------- Referencias: lista con sangria francesa + enlaces externos ---------- */
+.refs{
+  font-size:.92em !important;
+  color:var(--ink-soft) !important;
+  line-height:1.55;
+}
+.refs ul{ list-style:none; margin:0; padding:0; }
+.refs li{
+  margin:0 0 .8em !important;
+  padding-left:1.8em !important;
+  text-indent:-1.8em !important;
+}
+.refs em{ font-style:italic; }
+.refs a{
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:.85em !important;
+  text-decoration:none !important;
+  color:var(--exists) !important;
+  border-bottom:1px dotted var(--sand);
+}
+.refs a:hover{ border-bottom-style:solid; border-bottom-color:var(--rust); }
+
+/* ---------- Material en coleccion MNHN ---------- */
+.material-box{
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:6px;
+  padding:18px 22px;
+  font-size:.98em !important;
+  color:var(--ink-soft) !important;
+}
+.material-box strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  color:var(--teal-deep) !important;
+}
+.material-box em{ font-style:italic; }
+
+/* ---------- Galeria: 2 columnas grandes, foto + leyenda en la misma tarjeta ---------- */
+.gallery-2col table{
+  display:grid !important;
+  grid-template-columns:repeat(2, 1fr) !important;
+  gap:24px !important;
+  width:100% !important;
+  border-collapse:separate !important;
+  counter-reset:fig;
+}
+@media (max-width:640px){
+  .gallery-2col table{ grid-template-columns:1fr !important; }
+}
+.gallery-2col tbody, .gallery-2col tr{ display:contents !important; }
+.gallery-2col td{
+  display:block !important;
+  width:auto !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:5px;
+  padding:12px !important;
+  box-shadow:var(--shadow);
+}
+.gallery-2col td:empty{ display:none !important; }
+.gallery-2col img{
+  width:100% !important;
+  height:auto !important;
+  max-height:420px;
+  object-fit:contain !important;
+  background:var(--teal-deep);
+  border-radius:3px;
+  display:block;
+  margin-bottom:10px;
+}
+/* Numeracion correlativa automatica al INICIO de la leyenda (no arriba de
+   la foto): 'Figura 1. Aegla rostrata...', 'Figura 2. ...' etc. Se ancla
+   al primer <strong> que sigue a la imagen dentro de la celda. No hace
+   falta escribirla a mano ni renumerar si se agregan/quitan fotos. */
+.gallery-2col td strong:first-of-type::before{
+  counter-increment:fig;
+  content:'Figura ' counter(fig) '. ';
+  font-family:'IBM Plex Mono', monospace !important;
+  font-weight:600;
+  letter-spacing:.03em;
+  color:var(--sand) !important;
+}
+.gallery-2col td strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.95em !important;
+  color:var(--ink) !important;
+}
+.gallery-2col td em{ font-style:italic; color:var(--exists) !important; }
+`;
+const ABREV_CSS = `/* =====================================================================
+   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE ABREVIADA (v1)
+   -----------------------------------------------------------------------
+   Mismas reglas tecnicas de siempre: max 2 niveles de anidamiento de
+   divs, comillas simples exclusivamente, hr con clear:both, sin
+   modificar ningun [[[...]]]. A diferencia de la ficha de especie
+   completa: no hay foto de portada flotante (la galeria cumple ese rol,
+   viene justo despues de Clasificacion), y las leyendas YA incluyen su
+   propio 'Figura N:' escrito a mano en el contenido -> NO se usa
+   contador CSS automatico aqui (evita numeracion duplicada).
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+html, body{ overflow-x:hidden !important; max-width:100% !important; }
+
+.ficha-especie-abrev{
+  --paper:#F1ECDD;
+  --card:#FBF8EE;
+  --ink:#232A1F;
+  --ink-soft:#565C4C;
+  --ink-faint:#8A8570;
+  --teal:#2C5F52;
+  --teal-deep:#1B3D34;
+  --rust:#A8462E;
+  --sand:#B98A3B;
+  --line:#CBC0A0;
+  --line-soft:#DCD3B8;
+  --exists:#2E7D46;
+  --missing:#8A8570;
+  --shadow: 0 1px 2px rgba(34,29,15,.06), 0 6px 20px -8px rgba(34,29,15,.18);
+
+  max-width:1100px !important;
+  margin:0 auto !important;
+  font-size:16px !important;
+  font-family:'Source Sans 3', ui-sans-serif, system-ui, sans-serif !important;
+  color:var(--ink) !important;
+  line-height:1.6 !important;
+  overflow-x:hidden;
+}
+.ficha-especie-abrev *{ box-sizing:border-box; min-width:0; overflow-wrap:break-word; word-break:break-word; }
+.ficha-especie-abrev hr{
+  clear:both !important;
+  border:none !important;
+  border-top:1px solid var(--line) !important;
+  margin:26px 0 !important;
+}
+.ficha-especie-abrev h2{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-style:normal !important;
+  font-size:1.7em !important;
+  color:var(--ink) !important;
+  border-bottom:1px solid var(--line);
+  padding-bottom:8px;
+  margin:44px 0 18px !important;
+}
+
+/* ---------- Titulo (sin foto de portada: la galeria cumple ese rol) ---------- */
+.ficha-title{ padding:6px 0; }
+.ficha-type-label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace !important;
+  font-size:.85em !important;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:var(--sand) !important;
+  margin-bottom:8px;
+}
+.order-name{
+  display:block;
+  font-family:'Fraunces', serif !important;
+  font-style:italic;
+  font-weight:500;
+  font-size:2.8em !important;
+  line-height:1;
+  color:var(--teal-deep) !important;
+  letter-spacing:-.01em;
+}
+.taxon-authority{
+  display:block;
+  font-family:'Source Sans 3', sans-serif !important;
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  margin-top:4px;
+}
+
+/* ---------- Autoria ---------- */
+.ficha-author{ margin:18px 0 8px; }
+.ficha-author strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:700 !important;
+  font-size:1.15em !important;
+  color:var(--ink) !important;
+}
+.ficha-author em{
+  display:block;
+  font-family:'Source Sans 3', sans-serif !important;
+  font-style:italic !important;
+  font-size:1em !important;
+  color:var(--ink-soft) !important;
+  margin-top:3px;
+}
+
+/* ---------- Clasificacion: pildoras ---------- */
+.taxo-line{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px 4px;
+  font-size:1.3em !important;
+  font-weight:700;
+  color:var(--rust) !important;
+  font-family:'Fraunces', serif !important;
+}
+.taxo-line a{
+  display:inline-block;
+  text-decoration:none !important;
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.7em !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:20px;
+  padding:.45em .95em;
+  color:var(--exists) !important;
+  transition:background .15s ease, color .15s ease;
+}
+.taxo-line a:hover{ background:var(--teal); color:#fff !important; }
+.taxo-line a.newpage{
+  color:var(--missing) !important;
+  border-style:dashed;
+  background:var(--paper);
+}
+.taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+
+/* ---------- Galeria: 2 columnas, foto + leyenda en la misma tarjeta.
+   Las leyendas de esta ficha YA traen 'Figura N:' escrito en el
+   contenido -> aqui NO se agrega contador CSS (a diferencia de la ficha
+   de especie completa), para no duplicar la numeracion. ---------- */
+.gallery-2col table{
+  display:grid !important;
+  grid-template-columns:repeat(2, 1fr) !important;
+  gap:24px !important;
+  width:100% !important;
+  border-collapse:separate !important;
+}
+@media (max-width:640px){
+  .gallery-2col table{ grid-template-columns:1fr !important; }
+}
+.gallery-2col tbody, .gallery-2col tr{ display:contents !important; }
+.gallery-2col td{
+  display:block !important;
+  width:auto !important;
+  background:var(--card);
+  border:1px solid var(--line-soft);
+  border-radius:5px;
+  padding:12px !important;
+  box-shadow:var(--shadow);
+}
+.gallery-2col td:empty{ display:none !important; }
+.gallery-2col td, .gallery-2col td *{ float:none !important; }
+.gallery-2col td > div{ width:100% !important; margin:0 !important; }
+.gallery-2col img{
+  width:100% !important;
+  max-width:100% !important;
+  height:auto !important;
+  max-height:460px;
+  object-fit:contain !important;
+  background:var(--teal-deep);
+  border-radius:3px;
+  display:block;
+  margin-bottom:10px;
+}
+.gallery-2col td strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  font-size:.92em !important;
+  color:var(--ink) !important;
+}
+.gallery-2col td strong em{ font-style:italic; color:var(--exists) !important; }
+
+/* ---------- Prosa (Determinacion, Distribucion): una sola columna,
+   consistente con la ficha de especie completa. ---------- */
+.prose{
+  font-size:1.05em !important;
+  color:var(--ink-soft) !important;
+  max-width:75ch;
+}
+.prose em{ font-style:italic; color:var(--rust); }
+
+/* ---------- Referencias recomendadas: sangria francesa ---------- */
+.refs{
+  font-size:.92em !important;
+  color:var(--ink-soft) !important;
+  line-height:1.55;
+}
+.refs ul{ list-style:none; margin:0; padding:0; }
+.refs li{
+  margin:0 0 .8em !important;
+  padding-left:1.8em !important;
+  text-indent:-1.8em !important;
+}
+.refs em{ font-style:italic; }
+`;
+</script>
+</body>
+</html>
