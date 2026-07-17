@@ -313,6 +313,13 @@ function bulletize(text, prefix){
   return text.split('\n').map(l=>l.trim()).filter(l=>l.length>0)
     .map(l=> (prefix||'* ') + l).join('\n');
 }
+/* Antecedentes/Reconocimiento en la ficha de grupo: 2 columnas solo si
+   el texto es efectivamente largo (evita partir en dos bloques cortos
+   e incomodos un parrafo breve). Mismo criterio de umbral que se usa
+   para decidir el arbol de Grupos subordinados. */
+function proseWideClass(text){
+  return text.trim().length > 500 ? ' wide' : '';
+}
 /* Auto-formato del arbol: el usuario escribe texto plano, una entrada
    por linea ('Familia X', 'Genero especie Autor, Año'...), SIN
    corchetes ni espacios de sangria. Esta funcion agrega los corchetes
@@ -337,8 +344,17 @@ function autoFormatTree(raw){
   return raw.split('\n').map(line=>{
     const t = line.trim();
     if(!t) return '';
-    if(/^\*?\s*\[\[\[/.test(t)) return t; // ya formateada, no tocar
-    const rank = matchRank(t);
+    const alreadyFormatted = /^\*?\s*\[\[\[/.test(t);
+    // si ya viene con corchetes, extraer el contenido de adentro para
+    // poder detectar igual su rango y mantener actualizada la pila de
+    // ancestros (para que las lineas siguientes, si son texto plano,
+    // se indenten correctamente relativas a esta).
+    let content = t;
+    if(alreadyFormatted){
+      const m = t.match(/\[\[\[([^\]|]+)/);
+      content = m ? m[1].trim() : t;
+    }
+    const rank = matchRank(content);
     let visualDepth;
     if(rank !== null){
       const canon = RANK_DEPTH[rank];
@@ -349,6 +365,7 @@ function autoFormatTree(raw){
       // especie: un nivel mas profundo que el ultimo rango activo
       visualDepth = stack.length;
     }
+    if(alreadyFormatted) return line; // preserva la linea original, con su indentacion
     const spaces = ' '.repeat(Math.max(visualDepth,0));
     return spaces + '* [[[' + t + ']]]';
   }).join('\n');
@@ -543,14 +560,14 @@ ${tree}
 ------
 
 ++ Antecedentes:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('g_antecedentes').value)}"]]
 ${document.getElementById('g_antecedentes').value}
 [[/div]]
 
 ------
 
 ++ Reconocimiento:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('g_reconocimiento').value)}"]]
 ${document.getElementById('g_reconocimiento').value}
 [[/div]]
 
@@ -1102,16 +1119,18 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 .tree-legend strong{ color:var(--rust) !important; font-size:1em !important; }
 
-/* ---------- Antecedentes / Reconocimiento: prosa a 2 columnas ---------- */
+/* ---------- Antecedentes / Reconocimiento: prosa a 1 o 2 columnas ---------- */
 .prose{
   font-size:1.05em !important;
   color:var(--ink-soft) !important;
+}
+.prose.wide{
   column-count:2;
   column-gap:48px;
   column-rule:1px solid var(--line-soft);
 }
 @media (max-width:700px){
-  .prose{ column-count:1; }
+  .prose.wide{ column-count:1; }
 }
 .prose a{
   text-decoration:none !important;
