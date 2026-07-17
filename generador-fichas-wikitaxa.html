@@ -316,28 +316,40 @@ function bulletize(text, prefix){
 /* Auto-formato del arbol: el usuario escribe texto plano, una entrada
    por linea ('Familia X', 'Genero especie Autor, Año'...), SIN
    corchetes ni espacios de sangria. Esta funcion agrega los corchetes
-   [[[...]]], el asterisco, y calcula la sangria automaticamente segun
-   la profundidad del rango (misma profundidad = mismos espacios,
-   siempre, sin importar donde aparezca en la lista). Las lineas que
-   YA vienen formateadas (empiezan con * [[[ o [[[) se dejan intactas,
-   para poder pegar arboles ya armados sin que se dupliquen corchetes.
-   Las especies (sin rango reconocido) quedan un nivel mas profundo que
-   el ultimo rango visto. */
+   [[[...]]], el asterisco, y calcula la sangria automaticamente.
+
+   La profundidad se calcula con una PILA de rangos activos, no con una
+   tabla de numeros fijos: cada rango nuevo se compara solo contra los
+   rangos que YA aparecieron antes en este arbol (no contra una tabla
+   universal de 16 niveles), asi que si tu arbol salta de Phylum
+   directo a Orden (sin pasar por Subphylum/Clase/Subclase, que aqui
+   no existen), no se generan niveles vacios intermedios. Dos entradas
+   del mismo rango quedan al mismo nivel visual siempre que compartan
+   la misma cadena de ancestros; si una rama omite un rango intermedio
+   que otra si usa (ej. una Familia bajo Superfamilia vs. otra Familia
+   sin Superfamilia de por medio), sus profundidades reales difieren
+   -tal como en un arbol taxonomico autentico- y eso es correcto, no
+   un error. Las lineas que YA vienen formateadas (empiezan con
+   * [[[ o [[[) se dejan intactas, para poder pegar arboles ya armados
+   sin que se dupliquen corchetes. */
 function autoFormatTree(raw){
-  let lastDepth = -1;
+  let stack = []; // profundidades canonicas de los rangos ancestros activos
   return raw.split('\n').map(line=>{
     const t = line.trim();
     if(!t) return '';
     if(/^\*?\s*\[\[\[/.test(t)) return t; // ya formateada, no tocar
     const rank = matchRank(t);
-    let depth;
+    let visualDepth;
     if(rank !== null){
-      depth = RANK_DEPTH[rank];
-      lastDepth = depth;
+      const canon = RANK_DEPTH[rank];
+      while(stack.length && stack[stack.length-1] >= canon) stack.pop();
+      visualDepth = stack.length;
+      stack.push(canon);
     } else {
-      depth = lastDepth + 1;
+      // especie: un nivel mas profundo que el ultimo rango activo
+      visualDepth = stack.length;
     }
-    const spaces = ' '.repeat(Math.max(depth,0));
+    const spaces = ' '.repeat(Math.max(visualDepth,0));
     return spaces + '* [[[' + t + ']]]';
   }).join('\n');
 }
