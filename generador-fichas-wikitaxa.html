@@ -182,10 +182,10 @@ Pereópodos ordenados..."></textarea>
         <div><label>iNaturalist (URL)</label><input type="text" id="e_db_inat"></div>
       </div>
       <div class="row c4">
-        <div><label>Otra base de datos: nombre</label><input type="text" id="e_db_extra1_name" placeholder="Ej: WoRMS"></div>
-        <div><label>Otra base de datos: URL</label><input type="text" id="e_db_extra1_url"></div>
-        <div><label>Otra base de datos: nombre</label><input type="text" id="e_db_extra2_name" placeholder="Ej: MMA"></div>
-        <div><label>Otra base de datos: URL</label><input type="text" id="e_db_extra2_url"></div>
+        <div><label>Base adicional 1 — nombre</label><input type="text" id="e_db_extra1_name" placeholder="Ej: WoRMS"></div>
+        <div><label>Base adicional 1 — URL</label><input type="text" id="e_db_extra1_url"></div>
+        <div><label>Base adicional 2 — nombre</label><input type="text" id="e_db_extra2_name" placeholder="Ej: MMA"></div>
+        <div><label>Base adicional 2 — URL</label><input type="text" id="e_db_extra2_url"></div>
       </div>
     </div>
 
@@ -486,17 +486,18 @@ function buildGalleryWikitext(type, prefix, cols){
       if(!url){ cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n[[/cell]]'); continue; }
       let caption = '';
       if(type==='abrev'){
-        caption = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+        const raw = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+        const m = raw.match(/^(Figura\s*\d+\s*[.:]?)\s*([\s\S]*)$/i);
+        caption = m ? '[[span class="fig-num"]]'+m[1]+'[[/span]] '+m[2] : raw;
       } else if(type==='especie'){
         const t = parseSpeciesTitle(document.getElementById('e_titulo').value||'');
         const desc = (document.getElementById(prefix+'pie'+j)||{}).value || '';
         const autoTituloEl = document.getElementById(prefix+'autotitulo'+j);
         const autoTitulo = autoTituloEl ? autoTituloEl.checked : true;
-        if(autoTitulo){
-          caption = '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' '+desc : '');
-        } else {
-          caption = desc;
-        }
+        const inner = autoTitulo
+          ? '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' '+desc : '')
+          : desc;
+        caption = '[[span class="cap"]]'+inner+'[[/span]]';
       } else { // grupo
         const linkText = (document.getElementById(prefix+'pie'+j)||{}).value || '';
         if(linkText){
@@ -642,6 +643,16 @@ function buildEspecieCode(){
   const extra2Name = document.getElementById('e_db_extra2_name').value.trim();
   if(extra2Url) dbLinks.push('[*'+extra2Url+' '+(extra2Name||'Enlace')+']');
 
+  const dbBlock = dbLinks.length
+    ? `[[div class="ficha-dbrefs"]]
+${dbLinks.join(' ')}
+[[/div]]
+
+------
+
+`
+    : '';
+
   return `[[module css]]
 ${SPECIES_CSS}
 [[/module]]
@@ -667,12 +678,7 @@ ${SPECIES_CSS}
 [[/div]]
 ------
 
-[[div class="ficha-dbrefs"]]
-${dbLinks.join(' ')}
-[[/div]]
-
-------
-[[div class="ficha-names"]]
+${dbBlock}[[div class="ficha-names"]]
 **Sinónimos:** ${document.getElementById('e_sinonimos').value}
 **Nombres técnicos:** ${document.getElementById('e_tecnicos').value}
 **Nombres comunes:** ${document.getElementById('e_comunes').value}
@@ -1039,7 +1045,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   display:flex;
   flex-wrap:wrap;
   align-items:center;
-  gap:8px 4px;
+  gap:16px 6px;
   font-size:1.3em !important;
   font-weight:700;
   color:var(--rust) !important;
@@ -1158,8 +1164,10 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 .prose{
   font-size:1.05em !important;
   color:var(--ink-soft) !important;
+  max-width:75ch;
 }
 .prose.wide{
+  max-width:none;
   column-count:2;
   column-gap:48px;
   column-rule:1px solid var(--line-soft);
@@ -1484,7 +1492,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   display:flex;
   flex-wrap:wrap;
   align-items:center;
-  gap:8px 4px;
+  gap:16px 6px;
   font-size:1.3em !important;
   font-weight:700;
   color:var(--rust) !important;
@@ -1633,9 +1641,11 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 /* Numeracion correlativa automatica al INICIO de la leyenda (no arriba de
    la foto): 'Figura 1. Aegla rostrata...', 'Figura 2. ...' etc. Se ancla
-   al primer <strong> que sigue a la imagen dentro de la celda. No hace
-   falta escribirla a mano ni renumerar si se agregan/quitan fotos. */
-.gallery-2col td strong:first-of-type::before{
+   a un span.cap que SIEMPRE envuelve la leyenda (tenga o no negrita
+   automatica), asi el contador nunca se salta una imagen aunque el
+   nombre cientifico automatico este desactivado en el formulario. No
+   hace falta escribirla a mano ni renumerar si se agregan/quitan fotos. */
+.gallery-2col td span.cap::before{
   counter-increment:fig;
   content:'Figura ' counter(fig) '. ';
   font-family:'IBM Plex Mono', monospace !important;
@@ -1760,7 +1770,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   display:flex;
   flex-wrap:wrap;
   align-items:center;
-  gap:8px 4px;
+  gap:16px 6px;
   font-size:1.3em !important;
   font-weight:700;
   color:var(--rust) !important;
@@ -1832,6 +1842,16 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   color:var(--ink) !important;
 }
 .gallery-2col td strong em{ font-style:italic; color:var(--exists) !important; }
+/* Numero de figura destacado (detectado automaticamente al inicio de la
+   leyenda por la herramienta generadora, ej. 'Figura 1.'), mismo
+   lenguaje visual que el contador automatico de la ficha de especie
+   completa. */
+.gallery-2col td span.fig-num{
+  font-family:'IBM Plex Mono', monospace !important;
+  font-weight:600;
+  letter-spacing:.03em;
+  color:var(--sand) !important;
+}
 
 /* ---------- Prosa (Determinacion, Distribucion): 1 columna por defecto,
    2 columnas solo si el texto es largo (clase .wide), mismo criterio
