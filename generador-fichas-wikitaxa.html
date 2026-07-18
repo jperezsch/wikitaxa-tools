@@ -124,6 +124,7 @@
         <input type="text" id="g_t1" value="Reino "><input type="text" id="g_t2" value="Phylum "><input type="text" id="g_t3" value="Subphylum "><input type="text" id="g_t4" value="Superclase ">
         <input type="text" id="g_t5" value="Clase "><input type="text" id="g_t6" value="Subclase "><input type="text" id="g_t7" value="Superorden "><input type="text" id="g_t8" value="Orden ">
         <input type="text" id="g_t9" value="Suborden "><input type="text" id="g_t10" value="Infraorden "><input type="text" id="g_t11" value="Superfamilia "><input type="text" id="g_t12" value="Familia ">
+        <input type="text" id="g_t13" value="Subfamilia "><input type="text" id="g_t14" value="Tribu "><input type="text" id="g_t15" value="Subtribu "><input type="text" id="g_t16" value="Género ">
       </div>
     </div>
 
@@ -138,7 +139,7 @@ Genero especie Autor, Año"></textarea>
     </div>
 
     <div class="card">
-      <div class="section-title">4. Contenido</div>
+      <div class="section-title">4. Contenido <span class="hint" style="color:#8a6300">En cualquier campo de texto de aquí abajo, escribe //palabra// para que aparezca en cursiva (ej: nombres científicos).</span></div>
       <label>Antecedentes</label><textarea id="g_antecedentes" style="height:80px"></textarea>
       <label style="margin-top:12px">Reconocimiento</label><textarea id="g_reconocimiento" style="height:80px"></textarea>
       <label style="margin-top:12px">Caracteres diagnósticos <span class="hint">Uno por línea, se agregan como viñetas.</span></label><textarea id="g_diag" style="height:90px" placeholder="Caparazón ausente...
@@ -168,17 +169,23 @@ Pereópodos ordenados..."></textarea>
       </div>
       <div class="row c2">
         <div><label>URL foto principal (portada)</label><input type="text" id="e_foto_url"></div>
-        <div><label>Ancho <span class="hint">px, como en el original (ej: 660)</span></label><input type="text" id="e_foto_ancho" value="660"></div>
+        <div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title">2. Enlaces a bases de datos externas <span class="hint" style="color:#8a6300">Deja en blanco las que no correspondan.</span></div>
+      <div class="section-title">2. Enlaces a bases de datos externas <span class="hint" style="color:#8a6300">Deja en blanco las que no correspondan. Las 4 primeras son las más habituales; usa las 2 últimas para bases de datos específicas de tu especie (define tú el nombre que debe mostrarse).</span></div>
       <div class="row c4">
         <div><label>DECANET (URL)</label><input type="text" id="e_db_decanet"></div>
         <div><label>GBIF (URL)</label><input type="text" id="e_db_gbif"></div>
         <div><label>EOL (URL)</label><input type="text" id="e_db_eol"></div>
         <div><label>iNaturalist (URL)</label><input type="text" id="e_db_inat"></div>
+      </div>
+      <div class="row c4">
+        <div><label>Otra base de datos: nombre</label><input type="text" id="e_db_extra1_name" placeholder="Ej: WoRMS"></div>
+        <div><label>Otra base de datos: URL</label><input type="text" id="e_db_extra1_url"></div>
+        <div><label>Otra base de datos: nombre</label><input type="text" id="e_db_extra2_name" placeholder="Ej: MMA"></div>
+        <div><label>Otra base de datos: URL</label><input type="text" id="e_db_extra2_url"></div>
       </div>
     </div>
 
@@ -197,14 +204,15 @@ Pereópodos ordenados..."></textarea>
     <div class="card">
       <div class="section-title">4. Clasificación <span class="hint" style="color:#8a6300">Hasta Género inclusive.</span></div>
       <div class="taxa-grid">
-        <input type="text" id="e_t1" value="Reino "><input type="text" id="e_t2" value="Phylum "><input type="text" id="e_t3" value="Subphylum "><input type="text" id="e_t4" value="Clase ">
-        <input type="text" id="e_t5" value="Orden "><input type="text" id="e_t6" value="Suborden "><input type="text" id="e_t7" value="Infraorden "><input type="text" id="e_t8" value="Familia ">
-        <input type="text" id="e_t9" value="Subfamilia "><input type="text" id="e_t10" value="Tribu "><input type="text" id="e_t11" value="Subtribu "><input type="text" id="e_t12" value="Género ">
+        <input type="text" id="e_t1" value="Reino "><input type="text" id="e_t2" value="Phylum "><input type="text" id="e_t3" value="Subphylum "><input type="text" id="e_t4" value="Superclase ">
+        <input type="text" id="e_t5" value="Clase "><input type="text" id="e_t6" value="Subclase "><input type="text" id="e_t7" value="Superorden "><input type="text" id="e_t8" value="Orden ">
+        <input type="text" id="e_t9" value="Suborden "><input type="text" id="e_t10" value="Infraorden "><input type="text" id="e_t11" value="Superfamilia "><input type="text" id="e_t12" value="Familia ">
+        <input type="text" id="e_t13" value="Subfamilia "><input type="text" id="e_t14" value="Tribu "><input type="text" id="e_t15" value="Subtribu "><input type="text" id="e_t16" value="Género ">
       </div>
     </div>
 
     <div class="card">
-      <div class="section-title">5. Contenido</div>
+      <div class="section-title">5. Contenido <span class="hint" style="color:#8a6300">En cualquier campo de texto de aquí abajo, escribe //palabra// para que aparezca en cursiva (ej: nombres científicos).</span></div>
       <label>Antecedentes</label><textarea id="e_antecedentes" style="height:70px"></textarea>
       <label style="margin-top:12px">Reconocimiento</label><textarea id="e_reconocimiento" style="height:90px"></textarea>
       <label style="margin-top:12px">Caracteres diagnósticos <span class="hint">Uno por línea.</span></label><textarea id="e_diag" style="height:100px"></textarea>
@@ -212,7 +220,7 @@ Pereópodos ordenados..."></textarea>
       <label style="margin-top:12px">Otros antecedentes</label><textarea id="e_otros" style="height:70px"></textarea>
       <label style="margin-top:12px">Referencias <span class="hint">Una por línea. Para agregar un enlace tipo (PDF), escribe al final: [*url texto]</span></label>
       <textarea id="e_referencias" style="height:90px"></textarea>
-      <label style="margin-top:12px">Material en colección MNHN <span class="hint">Una línea por lote: código y descripción.</span></label>
+      <label style="margin-top:12px">Material en colección MNHN <span class="hint">Una línea por lote. Escribe tú el texto completo de cada línea (código, cantidad, etc.) — ya no se agrega el nombre de la especie automáticamente, para no repetirlo en cada línea si hay varios lotes. Usa **negrita** y //cursiva// donde corresponda.</span></label>
       <textarea id="e_material" style="height:70px" placeholder="(MNHNCL DEC-10721): 2 machos."></textarea>
     </div>
 
@@ -240,9 +248,10 @@ Pereópodos ordenados..."></textarea>
     <div class="card">
       <div class="section-title">2. Clasificación <span class="hint" style="color:#8a6300">Hasta Género inclusive.</span></div>
       <div class="taxa-grid">
-        <input type="text" id="a_t1" value="Reino "><input type="text" id="a_t2" value="Phylum "><input type="text" id="a_t3" value="Subphylum "><input type="text" id="a_t4" value="Clase ">
-        <input type="text" id="a_t5" value="Orden "><input type="text" id="a_t6" value="Suborden "><input type="text" id="a_t7" value="Infraorden "><input type="text" id="a_t8" value="Familia ">
-        <input type="text" id="a_t9" value="Subfamilia "><input type="text" id="a_t10" value="Tribu "><input type="text" id="a_t11" value="Subtribu "><input type="text" id="a_t12" value="Género ">
+        <input type="text" id="a_t1" value="Reino "><input type="text" id="a_t2" value="Phylum "><input type="text" id="a_t3" value="Subphylum "><input type="text" id="a_t4" value="Superclase ">
+        <input type="text" id="a_t5" value="Clase "><input type="text" id="a_t6" value="Subclase "><input type="text" id="a_t7" value="Superorden "><input type="text" id="a_t8" value="Orden ">
+        <input type="text" id="a_t9" value="Suborden "><input type="text" id="a_t10" value="Infraorden "><input type="text" id="a_t11" value="Superfamilia "><input type="text" id="a_t12" value="Familia ">
+        <input type="text" id="a_t13" value="Subfamilia "><input type="text" id="a_t14" value="Tribu "><input type="text" id="a_t15" value="Subtribu "><input type="text" id="a_t16" value="Género ">
       </div>
     </div>
 
@@ -253,7 +262,7 @@ Pereópodos ordenados..."></textarea>
     </div>
 
     <div class="card">
-      <div class="section-title">4. Contenido</div>
+      <div class="section-title">4. Contenido <span class="hint" style="color:#8a6300">En cualquier campo de texto de aquí abajo, escribe //palabra// para que aparezca en cursiva (ej: nombres científicos).</span></div>
       <label>Determinación</label><textarea id="a_det" style="height:110px"></textarea>
       <label style="margin-top:12px">Distribución</label><textarea id="a_dist" style="height:80px"></textarea>
       <label style="margin-top:12px">Referencias recomendadas <span class="hint">Una por línea.</span></label>
@@ -376,7 +385,7 @@ function formatTreeField(){
 }
 function buildClassificationChain(idPrefix){
   let parts = [];
-  for(let i=1;i<=12;i++){
+  for(let i=1;i<=16;i++){
     const el = document.getElementById(idPrefix+i);
     if(!el) continue;
     const val = el.value.trim();
@@ -433,8 +442,11 @@ function addGallerySlot(type){
     captionField = '<label>Leyenda completa <span class="hint">Incluye tú "Figura '+n+'." al inicio, y //cursiva// para el nombre científico si corresponde.</span></label>' +
       '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px">Figura '+n+'. </textarea>';
   } else if(type==='especie'){
-    captionField = '<label>Descripción de la imagen <span class="hint">Sin el nombre científico: se agrega solo, a partir del título. Ej: macho paratipo, vista dorsal.</span></label>' +
-      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px"></textarea>';
+    captionField = '<label>Descripción de la imagen <span class="hint">Texto libre para esta foto (ej: macho paratipo, vista dorsal). Usa //cursiva// donde corresponda.</span></label>' +
+      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px"></textarea>' +
+      '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
+      '<input type="checkbox" id="'+type[0]+'_autotitulo'+n+'" checked style="width:auto"> ' +
+      'Agregar automáticamente el nombre científico al inicio de esta leyenda</label>';
   } else {
     captionField = '<label>Texto del enlace <span class="hint">Nombre del grupo o especie tal como debe llamarse la página. Ej: Familia Falklandellidae</span></label>' +
       '<input type="text" id="'+type[0]+'_pie'+n+'">';
@@ -478,7 +490,13 @@ function buildGalleryWikitext(type, prefix, cols){
       } else if(type==='especie'){
         const t = parseSpeciesTitle(document.getElementById('e_titulo').value||'');
         const desc = (document.getElementById(prefix+'pie'+j)||{}).value || '';
-        caption = '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' ('+desc+')' : '');
+        const autoTituloEl = document.getElementById(prefix+'autotitulo'+j);
+        const autoTitulo = autoTituloEl ? autoTituloEl.checked : true;
+        if(autoTitulo){
+          caption = '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' '+desc : '');
+        } else {
+          caption = desc;
+        }
       } else { // grupo
         const linkText = (document.getElementById(prefix+'pie'+j)||{}).value || '';
         if(linkText){
@@ -533,17 +551,20 @@ ${GROUP_CSS}
 [[/module]]
 
 [[div class="ficha-taxon"]]
+[[div class="ficha-left-col"]]
 [[div class="ficha-title"]]
 [[span class="ficha-type-label"]]Ficha de grupo[[/span]]
 
 [[span class="order-name"]]${rango} ${nombre}[[/span]]
 [[/div]]
 
-${heroBlock}[[div class="ficha-author"]]
+[[div class="ficha-author"]]
 **${document.getElementById('g_autor_nom').value}**
 //${document.getElementById('g_autor_inst').value}//
 [[/div]]
-------
+[[/div]]
+
+${heroBlock}------
 
 ++ Clasificación:
 [[div class="taxo-line"]]
@@ -606,7 +627,7 @@ function buildEspecieCode(){
   const chain = buildClassificationChain('e_t');
   const gallery = buildGalleryWikitext('especie','e_',2);
   const foto_url = document.getElementById('e_foto_url').value.trim();
-  const foto_ancho = document.getElementById('e_foto_ancho').value.trim() || '660';
+  const foto_ancho = '800'; // el CSS fuerza el ancho real via object-fit; este valor solo evita que la imagen se vea gigante antes de que cargue el CSS
 
   let dbLinks = [];
   const dbMap = [['e_db_decanet','DECANET'],['e_db_gbif','GBIF'],['e_db_eol','EOL'],['e_db_inat','INaturalist']];
@@ -614,6 +635,12 @@ function buildEspecieCode(){
     const url = document.getElementById(id).value.trim();
     if(url) dbLinks.push('[*'+url+' '+label+']');
   });
+  const extra1Url = document.getElementById('e_db_extra1_url').value.trim();
+  const extra1Name = document.getElementById('e_db_extra1_name').value.trim();
+  if(extra1Url) dbLinks.push('[*'+extra1Url+' '+(extra1Name||'Enlace')+']');
+  const extra2Url = document.getElementById('e_db_extra2_url').value.trim();
+  const extra2Name = document.getElementById('e_db_extra2_name').value.trim();
+  if(extra2Url) dbLinks.push('[*'+extra2Url+' '+(extra2Name||'Enlace')+']');
 
   return `[[module css]]
 ${SPECIES_CSS}
@@ -624,6 +651,7 @@ ${SPECIES_CSS}
 [[f>image ${foto_url} width="${foto_ancho}" style="float: right;" title="${t.binomial} ${t.authority}"]]
 [[/div]]
 
+[[div class="ficha-left-col"]]
 [[div class="ficha-title"]]
 [[span class="ficha-type-label"]]Ficha de especie[[/span]]
 
@@ -635,6 +663,7 @@ ${SPECIES_CSS}
 [[div class="ficha-author"]]
 **${document.getElementById('e_autor_nom').value}**
 //${document.getElementById('e_autor_inst').value}//
+[[/div]]
 [[/div]]
 ------
 
@@ -660,14 +689,14 @@ ${chain}
 ------
 
 ++ Antecedentes:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('e_antecedentes').value)}"]]
 ${document.getElementById('e_antecedentes').value}
 [[/div]]
 
 ------
 
 ++ Reconocimiento:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('e_reconocimiento').value)}"]]
 ${document.getElementById('e_reconocimiento').value}
 [[/div]]
 
@@ -681,14 +710,14 @@ ${bulletize(document.getElementById('e_diag').value)}
 ------
 
 ++ Distribución:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('e_distribucion').value)}"]]
 ${document.getElementById('e_distribucion').value}
 [[/div]]
 
 ------
 
 ++ Otros antecedentes:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('e_otros').value)}"]]
 ${document.getElementById('e_otros').value}
 [[/div]]
 
@@ -703,7 +732,7 @@ ${bulletize(document.getElementById('e_referencias').value)}
 
 ++ Material en colección MNHN:
 [[div class="material-box"]]
-${bulletize(document.getElementById('e_material').value, '**'+t.binomial+' '+t.authority+'** ')}
+${bulletize(document.getElementById('e_material').value, '')}
 [[/div]]
 
 ------
@@ -755,14 +784,14 @@ ${gallery}
 ------
 
 ++ Determinación:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('a_det').value)}"]]
 ${document.getElementById('a_det').value}
 [[/div]]
 
 ------
 
 ++ Distribución:
-[[div class="prose"]]
+[[div class="prose${proseWideClass(document.getElementById('a_dist').value)}"]]
 ${document.getElementById('a_dist').value}
 [[/div]]
 
@@ -904,10 +933,16 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   margin:28px 0 !important;
 }
 
-/* ---------- Título + foto en dos columnas (floats entre hermanos, sin div envolvente) ---------- */
-.ficha-title{
+/* ---------- Título + autoría en columna izquierda, foto en columna derecha
+   (misma columna izquierda evita que la foto -mas alta- empuje la autoria
+   hacia abajo dejando un hueco; antes titulo y autoria flotaban por
+   separado y 'clear:both' en autoria esperaba a que la foto terminara) ---------- */
+.ficha-left-col{
   float:left;
   width:36%;
+  box-sizing:border-box;
+}
+.ficha-title{
   padding:6px 0;
   box-sizing:border-box;
 }
@@ -930,7 +965,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   margin:0 !important;
 }
 @media (max-width:800px){
-  .ficha-title, .ficha-hero{ float:none; width:100%; margin-bottom:16px; }
+  .ficha-left-col, .ficha-hero{ float:none; width:100%; margin-bottom:16px; }
 }
 .ficha-type-label{
   display:block;
@@ -967,9 +1002,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   border-radius:2px;
 }
 
-/* ---------- Autoria (parrafo autor + afiliacion, justo debajo del titulo) ---------- */
+/* ---------- Autoria (parrafo autor + afiliacion, dentro de la misma
+   columna izquierda del titulo, sin esperar a que la foto termine) ---------- */
 .ficha-author{
-  clear:both;
   margin:18px 0 8px;
 }
 .ficha-author strong{
@@ -1347,9 +1382,16 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 @media (max-width:760px){
   .ficha-hero{ float:none; width:100%; margin:0 0 16px !important; }
+  .ficha-left-col{ float:none; width:100%; }
 }
 
-/* ---------- Titulo (rango + nombre en cursiva + autoria) ---------- */
+/* ---------- Columna izquierda compartida: titulo + autoria, para que
+   ambos queden juntos sin esperar a que la foto (mas alta) termine ---------- */
+.ficha-left-col{
+  float:left;
+  width:44%;
+  box-sizing:border-box;
+}
 .ficha-title{ padding:6px 0; }
 .ficha-type-label{
   display:block;
@@ -1378,8 +1420,8 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   margin-top:4px;
 }
 
-/* ---------- Autoria ---------- */
-.ficha-author{ clear:none; margin:18px 0 8px; }
+/* ---------- Autoria (dentro de la misma columna izquierda del titulo) ---------- */
+.ficha-author{ margin:18px 0 8px; }
 .ficha-author strong{
   font-family:'Fraunces', serif !important;
   font-weight:700 !important;
@@ -1428,7 +1470,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 .ficha-names strong{
   display:inline-block;
-  min-width:9em;
+  margin-right:.6em;
   font-family:'IBM Plex Mono', monospace !important;
   font-weight:600 !important;
   font-size:.78em !important;
@@ -1470,13 +1512,23 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 .taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
 
 /* ---------- Prosa (Antecedentes, Reconocimiento, Distribucion, Otros antecedentes) ----------
-   A diferencia de la ficha de taxon, aqui el texto es corto: se deja en
-   una sola columna, con ancho comodo de lectura, en vez de forzar 2
-   columnas que quedarian mal balanceadas con parrafos tan breves. */
+   A diferencia de la ficha de taxon original, aqui se usa el mismo
+   criterio unificado: 1 columna por defecto, 2 columnas solo si el
+   texto es efectivamente largo (clase .wide, agregada por la
+   herramienta generadora segun la extension de cada bloque). */
 .prose{
   font-size:1.05em !important;
   color:var(--ink-soft) !important;
   max-width:68ch;
+}
+.prose.wide{
+  max-width:none;
+  column-count:2;
+  column-gap:48px;
+  column-rule:1px solid var(--line-soft);
+}
+@media (max-width:700px){
+  .prose.wide{ column-count:1; }
 }
 .prose em{ font-style:italic; color:var(--rust); }
 
@@ -1781,12 +1833,22 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 .gallery-2col td strong em{ font-style:italic; color:var(--exists) !important; }
 
-/* ---------- Prosa (Determinacion, Distribucion): una sola columna,
-   consistente con la ficha de especie completa. ---------- */
+/* ---------- Prosa (Determinacion, Distribucion): 1 columna por defecto,
+   2 columnas solo si el texto es largo (clase .wide), mismo criterio
+   que en las otras dos fichas. ---------- */
 .prose{
   font-size:1.05em !important;
   color:var(--ink-soft) !important;
   max-width:75ch;
+}
+.prose.wide{
+  max-width:none;
+  column-count:2;
+  column-gap:48px;
+  column-rule:1px solid var(--line-soft);
+}
+@media (max-width:700px){
+  .prose.wide{ column-count:1; }
 }
 .prose em{ font-style:italic; color:var(--rust); }
 
