@@ -905,6 +905,15 @@ const GROUP_CSS = `/* ==========================================================
    nivel del documento/tema, no dentro del propio div de la ficha. */
 html, body{ overflow-x:hidden !important; max-width:100% !important; }
 
+/* El titulo de la pagina (campo "Titulo" al crear/editar en Wikidot)
+   se llena SIEMPRE con el nombre real (ver casillero "Titulo sugerido"
+   junto al codigo generado) -> asi funcionan bien la pestaña del
+   navegador, Google, las migas de pan y los listados ListPages. Pero
+   ese titulo ya se muestra bonito dentro de esta misma ficha (mas
+   abajo, con su propia tipografia), asi que el encabezado por defecto
+   de Wikidot (#page-title) se oculta aqui para no duplicarlo. */
+#page-title{ display:none; }
+
 .ficha-taxon{
   --paper:#F1ECDD;
   --card:#FBF8EE;
@@ -1314,6 +1323,12 @@ const SPECIES_CSS = `/* ========================================================
 
 html, body{ overflow-x:hidden !important; max-width:100% !important; }
 
+/* Ver nota en GROUP_CSS: el titulo real va en el campo "Titulo" de
+   Wikidot (para pestaña/Google/breadcrumbs/ListPages), pero el
+   encabezado por defecto se oculta aqui porque esta ficha ya muestra
+   su propio titulo con estilo propio mas abajo. */
+#page-title{ display:none; }
+
 .ficha-especie{
   --paper:#F1ECDD;
   --card:#FBF8EE;
@@ -1676,6 +1691,12 @@ const ABREV_CSS = `/* ==========================================================
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
 html, body{ overflow-x:hidden !important; max-width:100% !important; }
+
+/* Ver nota en GROUP_CSS: el titulo real va en el campo "Titulo" de
+   Wikidot (para pestaña/Google/breadcrumbs/ListPages), pero el
+   encabezado por defecto se oculta aqui porque esta ficha ya muestra
+   su propio titulo con estilo propio mas abajo. */
+#page-title{ display:none; }
 
 .ficha-especie-abrev{
   --paper:#F1ECDD;
