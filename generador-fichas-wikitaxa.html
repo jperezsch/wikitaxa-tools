@@ -875,9 +875,45 @@ function startNewFicha(){
 document.getElementById('pending-note').style.display='block';
 
 
-/* ===================== CSS EMBEBIDO (los 3 ya validados) ===================== */
+/* ===================== CSS EMBEBIDO (los 3, versión responsiva) =====================
+   CAMBIOS DE FONDO respecto a la version anterior (documentados aqui porque
+   se repiten igual en los 3 bloques de abajo):
+
+   1) GALERIAS: antes la tabla de Wikidot ([[table]]/[[row]]/[[cell]]) se
+      convertia visualmente en una grilla usando 'display:grid' en la
+      <table> y 'display:contents' en <tbody>/<tr> para que esos elementos
+      "desaparecieran" y las <td> quedaran como celdas directas de la
+      grilla. Ese truco depende de que el motor del navegador reconstruya
+      correctamente el arbol de layout cuando una fila de tabla se vuelve
+      'contents': varios navegadores moviles (Safari/iOS y algunos
+      WebView de Android, sobre todo en versiones no recientes) tienen
+      bugs conocidos con 'display:contents' aplicado a filas/cuerpos de
+      tabla, y el resultado es que las celdas no se alinean en columnas
+      sino que quedan montadas unas sobre otras o desplazadas ("las
+      imagenes aparecen corridas"), aunque en Chrome de escritorio se vea
+      perfecto. La solucion aqui es NO usar 'display:contents': cada fila
+      generada por la herramienta ([[row]]) ya contiene exactamente las N
+      celdas de una fila visual, asi que basta con volver la <tr> un
+      contenedor flex ('display:flex; flex-wrap:wrap') y cada <td> un
+      item flex con un ancho porcentual (25%/50%/100% segun el ancho de
+      pantalla). Esto es compatible con practicamente cualquier
+      navegador movil moderno, sin depender de 'display:contents'.
+
+   2) TITULOS: antes el tamano de letra de .order-name cambiaba en un solo
+      salto brusco (ej. 3.1em de escritorio a 2.2em recien bajo 640px),
+      mientras que las columnas flotantes (foto + texto) recien se apilaban
+      bajo 760-800px. Eso dejaba una "zona muerta" entre esos dos puntos
+      (tablets y telefonos en horizontal, ~640-800px) donde la columna de
+      texto seguia siendo angosta (36-44% del ancho) PERO la letra todavia
+      era gigante, y el resultado visual era un titulo con palabras
+      partidas letra por letra que parece "cortado". Aqui se unifica el
+      punto en que la foto y el texto se apilan (900px, cubre tablets en
+      vertical) y ademas se usa 'clamp()' con unidades 'vw' para que el
+      tamano de letra se reduzca de forma continua y proporcional al ancho
+      real de pantalla, sin saltos ni zonas muertas.
+   ===================================================================== */
 const GROUP_CSS = `/* =====================================================================
-   ESTILO 'FICHA DE ESPECIMEN' PARA FICHAS DE GRUPO DE WIKITAXA (v2)
+   ESTILO 'FICHA DE ESPECIMEN' PARA FICHAS DE GRUPO DE WIKITAXA (v3 — responsivo)
    -----------------------------------------------------------------------
    Se aplica SOLO dentro del bloque div de clase 'ficha-taxon'.
    No modifica el código wiki funcional: los enlaces [[[...]]] siguen
@@ -891,6 +927,9 @@ const GROUP_CSS = `/* ==========================================================
    proporciones internas usan 'em' (relativas a ese ancla), no 'rem'.
    También se usa !important en tipografía para ganarle a reglas del
    tema que suelen estar más especificas (p.ej. '#page-content p').
+   Los títulos usan además 'clamp()' con 'vw' para escalar de forma
+   continua según el ancho real de pantalla (ver nota de cabecera del
+   bloque de scripts sobre por qué se eliminó el salto brusco anterior).
 
    CÓMO INSTALARLO: pega este bloque completo dentro de
    [[module css]] ... aquí el CSS ... [[/module]]
@@ -951,7 +990,12 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 /* ---------- Título + autoría en columna izquierda, foto en columna derecha
    (misma columna izquierda evita que la foto -mas alta- empuje la autoria
    hacia abajo dejando un hueco; antes titulo y autoria flotaban por
-   separado y 'clear:both' en autoria esperaba a que la foto terminara) ---------- */
+   separado y 'clear:both' en autoria esperaba a que la foto terminara).
+   El punto en que se apilan (900px) queda por ENCIMA del punto en que
+   .order-name reduce su tamaño via clamp(), asi que nunca hay una
+   ventana intermedia donde la columna sea angosta Y la letra gigante a
+   la vez (esa combinacion era la causa real del titulo "cortado" en
+   tablets y telefonos en horizontal). ---------- */
 .ficha-left-col{
   float:left;
   width:36%;
@@ -960,6 +1004,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 .ficha-title{
   padding:6px 0;
   box-sizing:border-box;
+  max-width:100%;
 }
 .ficha-hero{
   float:right;
@@ -979,7 +1024,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   max-width:100% !important;
   margin:0 !important;
 }
-@media (max-width:800px){
+@media (max-width:900px){
   .ficha-left-col, .ficha-hero{ float:none; width:100%; margin-bottom:16px; }
 }
 .ficha-type-label{
@@ -996,13 +1041,15 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-style:italic;
   font-weight:500;
-  font-size:3.1em !important;
-  line-height:1.02;
+  /* Escala continua entre ~1.7em (telefonos angostos) y 3.1em (escritorio),
+     segun el ancho REAL de pantalla (vw), sin saltos bruscos. */
+  font-size:clamp(1.7em, 1.3em + 3.2vw, 3.1em) !important;
+  line-height:1.05;
   color:var(--teal-deep) !important;
   letter-spacing:-.01em;
-}
-@media (max-width:640px){
-  .order-name{ font-size:2.2em !important; }
+  overflow-wrap:break-word;
+  word-break:break-word;
+  hyphens:auto;
 }
 .ficha-hero img{
   width:100% !important;
@@ -1015,6 +1062,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   margin:0 !important;
   background:var(--teal-deep);
   border-radius:2px;
+}
+@media (max-width:600px){
+  .ficha-hero img{ max-height:340px; }
 }
 
 /* ---------- Autoria (parrafo autor + afiliacion, dentro de la misma
@@ -1042,11 +1092,14 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-weight:600 !important;
   font-style:normal !important;
-  font-size:1.9em !important;
+  font-size:clamp(1.35em, 1.1em + 1.2vw, 1.9em) !important;
   color:var(--ink) !important;
   border-bottom:1px solid var(--line);
   padding-bottom:10px;
   margin:50px 0 20px !important;
+}
+@media (max-width:600px){
+  .ficha-taxon h2{ margin:36px 0 16px !important; }
 }
 
 /* ---------- Clasificacion: etiquetas tipo pildora ---------- */
@@ -1080,6 +1133,10 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   background:var(--paper);
 }
 .taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+@media (max-width:600px){
+  .taxo-line{ font-size:1.05em !important; gap:10px 5px; }
+  .taxo-line a{ padding:.4em .8em; }
+}
 
 /* ---------- Grupos subordinados: arbol sistematico ---------- */
 .tax-tree-wrap{
@@ -1088,6 +1145,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   border-radius:6px;
   box-shadow:var(--shadow);
   padding:26px clamp(12px,3vw,30px);
+  overflow-x:auto;
 }
 .tax-tree-wrap ul{
   list-style:none;
@@ -1118,6 +1176,12 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   margin:0 0 18px;
   font-size:1.15em;
   font-weight:600;
+}
+@media (max-width:600px){
+  .tax-tree-wrap{ padding:18px 14px; }
+  .tax-tree-wrap ul{ padding-left:14px; }
+  .tax-tree-wrap li{ padding-left:10px; font-size:.95em; }
+  .tax-tree-wrap > ul > li{ font-size:1.05em; }
 }
 .tax-tree-wrap a{
   text-decoration:none !important;
@@ -1223,6 +1287,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   left:0; top:1em;
 }
 .diag-box li:first-child::before{ top:.25em; }
+@media (max-width:600px){
+  .diag-box{ padding:16px 18px; }
+}
 
 /* ---------- Distribucion: texto normal (sin caja ni etiqueta) ---------- */
 
@@ -1238,23 +1305,31 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   text-indent:-1.8em !important;
 }
 
-/* ---------- Galeria: tabla -> grilla de tarjetas (4 columnas fijas) ---------- */
+/* ---------- Galeria: tabla -> tarjetas responsivas con flexbox -----------
+   (antes: tabla convertida a grilla via 'display:grid' + 'display:contents'
+   en tbody/tr; ese truco es fragil en varios navegadores moviles y
+   producia celdas desalineadas/superpuestas. Ahora cada [[row]] generado
+   por la herramienta ya trae exactamente las celdas de una fila visual,
+   asi que basta con volver esa fila un contenedor flex.) ---------- */
 .gallery-wrap table{
-  display:grid !important;
-  grid-template-columns:repeat(4, 1fr) !important;
-  gap:22px !important;
+  display:block !important;
   width:100% !important;
   border-collapse:separate !important;
 }
-@media (max-width:900px){
-  .gallery-wrap table{ grid-template-columns:repeat(2, 1fr) !important; }
+.gallery-wrap tbody{ display:block !important; }
+.gallery-wrap tr{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:stretch;
+  gap:22px !important;
+  width:100% !important;
+  margin:0 0 22px !important;
 }
-@media (max-width:500px){
-  .gallery-wrap table{ grid-template-columns:1fr !important; }
-}
-.gallery-wrap tbody, .gallery-wrap tr{ display:contents !important; }
+.gallery-wrap tr:last-child{ margin-bottom:0 !important; }
 .gallery-wrap td{
   display:block !important;
+  flex:1 1 calc(25% - 16.5px) !important;
+  max-width:calc(25% - 16.5px) !important;
   width:auto !important;
   vertical-align:top;
   background:var(--card);
@@ -1264,6 +1339,13 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   box-shadow:var(--shadow);
 }
 .gallery-wrap td:empty{ display:none !important; }
+@media (max-width:900px){
+  .gallery-wrap td{ flex:1 1 calc(50% - 11px) !important; max-width:calc(50% - 11px) !important; }
+}
+@media (max-width:560px){
+  .gallery-wrap tr{ gap:14px !important; }
+  .gallery-wrap td{ flex:1 1 100% !important; max-width:100% !important; }
+}
 .gallery-wrap strong{
   display:block;
   font-family:'Fraunces', serif !important;
@@ -1309,14 +1391,24 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   border-radius:3px;
   display:block;
 }
+@media (max-width:900px){
+  .gallery-wrap img{ height:230px; }
+}
+@media (max-width:560px){
+  .gallery-wrap img{ height:200px; }
+}
 `;
 const SPECIES_CSS = `/* =====================================================================
-   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE (v1)
+   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE (v2 — responsivo)
    -----------------------------------------------------------------------
    Mismas reglas aprendidas con la Ficha de taxon: max 2 niveles de
    anidamiento de divs, comillas simples exclusivamente, hr con
    clear:both, sin modificar ningun [[[...]]] excepto el truco de dos
    enlaces adyacentes para especies (aqui no aplica: no hay arbol).
+   El punto en que la foto y la columna de texto se apilan (900px) y la
+   reduccion fluida de .order-name via clamp() siguen el mismo criterio
+   explicado en la cabecera de GROUP_CSS, para eliminar la "zona muerta"
+   donde el titulo se veia cortado en tablets/telefonos en horizontal.
    ===================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
@@ -1364,11 +1456,14 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-weight:600 !important;
   font-style:normal !important;
-  font-size:1.9em !important;
+  font-size:clamp(1.35em, 1.1em + 1.2vw, 1.9em) !important;
   color:var(--ink) !important;
   border-bottom:1px solid var(--line);
   padding-bottom:10px;
   margin:50px 0 20px !important;
+}
+@media (max-width:600px){
+  .ficha-especie h2{ margin:36px 0 16px !important; }
 }
 
 /* ---------- Foto principal (float nativo de [[f>image]], solo se enmarca) ---------- */
@@ -1403,9 +1498,12 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   background:var(--teal-deep);
   border-radius:2px;
 }
-@media (max-width:760px){
+@media (max-width:900px){
   .ficha-hero{ float:none; width:100%; margin:0 0 16px !important; }
   .ficha-left-col{ float:none; width:100%; }
+}
+@media (max-width:600px){
+  .ficha-hero img{ max-height:360px; }
 }
 
 /* ---------- Columna izquierda compartida: titulo + autoria, para que
@@ -1415,7 +1513,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   width:44%;
   box-sizing:border-box;
 }
-.ficha-title{ padding:6px 0; }
+.ficha-title{ padding:6px 0; max-width:100%; }
 .ficha-type-label{
   display:block;
   font-family:'IBM Plex Mono', monospace !important;
@@ -1430,10 +1528,17 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-style:italic;
   font-weight:500;
-  font-size:3em !important;
-  line-height:1;
+  /* Igual criterio que en GROUP_CSS: escala continua segun el ancho real
+     de pantalla, sin saltos, y el punto de apilado (900px) esta por
+     encima de donde esta funcion empieza a achicar la letra, asi que
+     nunca coincide "columna angosta" con "letra gigante" al mismo tiempo. */
+  font-size:clamp(1.6em, 1.2em + 3.1vw, 3em) !important;
+  line-height:1.05;
   color:var(--teal-deep) !important;
   letter-spacing:-.01em;
+  overflow-wrap:break-word;
+  word-break:break-word;
+  hyphens:auto;
 }
 .taxon-authority{
   display:block;
@@ -1480,6 +1585,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   padding:.5em 1.1em;
 }
 .ficha-dbrefs a:hover{ background:var(--teal); color:#fff !important; border-color:var(--teal-deep); }
+@media (max-width:600px){
+  .ficha-dbrefs a{ font-size:.9em !important; padding:.45em .9em; }
+}
 
 /* ---------- Sinonimos / nombres ---------- */
 .ficha-names{
@@ -1500,6 +1608,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   text-transform:uppercase;
   letter-spacing:.06em;
   color:var(--sand) !important;
+}
+@media (max-width:600px){
+  .ficha-names{ padding:14px 16px; }
 }
 
 /* ---------- Clasificacion: pildoras ---------- */
@@ -1533,6 +1644,10 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   background:var(--paper);
 }
 .taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+@media (max-width:600px){
+  .taxo-line{ font-size:1.05em !important; gap:10px 5px; }
+  .taxo-line a{ padding:.4em .8em; }
+}
 
 /* ---------- Prosa (Antecedentes, Reconocimiento, Distribucion, Otros antecedentes) ----------
    A diferencia de la ficha de taxon original, aqui se usa el mismo
@@ -1582,6 +1697,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   left:0; top:1em;
 }
 .diag-box li:first-child::before{ top:.25em; }
+@media (max-width:600px){
+  .diag-box{ padding:16px 18px; }
+}
 
 /* ---------- Referencias: lista con sangria francesa + enlaces externos ---------- */
 .refs{
@@ -1620,23 +1738,37 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   color:var(--teal-deep) !important;
 }
 .material-box em{ font-style:italic; }
+@media (max-width:600px){
+  .material-box{ padding:14px 16px; }
+}
 
-/* ---------- Galeria: 2 columnas grandes, foto + leyenda en la misma tarjeta ---------- */
+/* ---------- Galeria: 2 columnas grandes, foto + leyenda en la misma tarjeta.
+   Mismo cambio de fondo que en GROUP_CSS: se reemplaza el truco de
+   'display:grid' + 'display:contents' (fragil en moviles) por filas
+   flexbox, ya que cada [[row]] generado trae exactamente las celdas de
+   una fila visual. ---------- */
 .gallery-2col table{
-  display:grid !important;
-  grid-template-columns:repeat(2, 1fr) !important;
-  gap:24px !important;
+  display:block !important;
   width:100% !important;
   border-collapse:separate !important;
   counter-reset:fig;
 }
-@media (max-width:640px){
-  .gallery-2col table{ grid-template-columns:1fr !important; }
+.gallery-2col tbody{ display:block !important; }
+.gallery-2col tr{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:stretch;
+  gap:24px !important;
+  width:100% !important;
+  margin:0 0 24px !important;
 }
-.gallery-2col tbody, .gallery-2col tr{ display:contents !important; }
+.gallery-2col tr:last-child{ margin-bottom:0 !important; }
 .gallery-2col td{
   display:block !important;
+  flex:1 1 calc(50% - 12px) !important;
+  max-width:calc(50% - 12px) !important;
   width:auto !important;
+  box-sizing:border-box !important;
   background:var(--card);
   border:1px solid var(--line-soft);
   border-radius:5px;
@@ -1644,6 +1776,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   box-shadow:var(--shadow);
 }
 .gallery-2col td:empty{ display:none !important; }
+@media (max-width:640px){
+  .gallery-2col td{ flex:1 1 100% !important; max-width:100% !important; }
+}
 .gallery-2col img{
   width:100% !important;
   height:auto !important;
@@ -1654,12 +1789,18 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   display:block;
   margin-bottom:10px;
 }
+@media (max-width:640px){
+  .gallery-2col img{ max-height:340px; }
+}
 /* Numeracion correlativa automatica al INICIO de la leyenda (no arriba de
    la foto): 'Figura 1. Aegla rostrata...', 'Figura 2. ...' etc. Se ancla
    a un span.cap que SIEMPRE envuelve la leyenda (tenga o no negrita
    automatica), asi el contador nunca se salta una imagen aunque el
    nombre cientifico automatico este desactivado en el formulario. No
-   hace falta escribirla a mano ni renumerar si se agregan/quitan fotos. */
+   hace falta escribirla a mano ni renumerar si se agregan/quitan fotos.
+   (El contador sigue funcionando igual aunque la tabla ya no use
+   'display:grid': 'counter-reset'/'counter-increment' dependen del
+   arbol del DOM, no del modo de layout visual). */
 .gallery-2col td span.cap::before{
   counter-increment:fig;
   content:'Figura ' counter(fig) '. ';
@@ -1677,7 +1818,7 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 .gallery-2col td em{ font-style:italic; color:var(--exists) !important; }
 `;
 const ABREV_CSS = `/* =====================================================================
-   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE ABREVIADA (v1)
+   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE ABREVIADA (v2 — responsivo)
    -----------------------------------------------------------------------
    Mismas reglas tecnicas de siempre: max 2 niveles de anidamiento de
    divs, comillas simples exclusivamente, hr con clear:both, sin
@@ -1686,7 +1827,12 @@ const ABREV_CSS = `/* ==========================================================
    viene justo despues de Clasificacion), y las leyendas YA incluyen su
    propio 'Figura N:' escrito a mano en el contenido -> NO se usa
    contador CSS automatico aqui (evita numeracion duplicada).
-   ===================================================================== */
+
+   Esta hoja era la que menos puntos de quiebre (media queries) tenia
+   de las tres, asi que aqui se agregaron todos los que ya existian en
+   GROUP_CSS/SPECIES_CSS: tamaño de titulo fluido con clamp(), galeria
+   en filas flexbox (en vez de 'display:grid' + 'display:contents',
+   fragil en moviles), y paddings reducidos en pantallas chicas. ---------- */
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500;1,9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
 
@@ -1733,15 +1879,18 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-weight:600 !important;
   font-style:normal !important;
-  font-size:1.7em !important;
+  font-size:clamp(1.25em, 1em + 1.1vw, 1.7em) !important;
   color:var(--ink) !important;
   border-bottom:1px solid var(--line);
   padding-bottom:8px;
   margin:44px 0 18px !important;
 }
+@media (max-width:600px){
+  .ficha-especie-abrev h2{ margin:32px 0 14px !important; }
+}
 
 /* ---------- Titulo (sin foto de portada: la galeria cumple ese rol) ---------- */
-.ficha-title{ padding:6px 0; }
+.ficha-title{ padding:6px 0; max-width:100%; }
 .ficha-type-label{
   display:block;
   font-family:'IBM Plex Mono', monospace !important;
@@ -1756,10 +1905,16 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-family:'Fraunces', serif !important;
   font-style:italic;
   font-weight:500;
-  font-size:2.8em !important;
-  line-height:1;
+  /* Sin columna flotante angosta en esta ficha (no hay foto de portada),
+     pero igual se usa clamp() para que en telefonos muy chicos (320-375px)
+     el nombre cientifico + autor no se vea desproporcionado. */
+  font-size:clamp(1.5em, 1.15em + 2.6vw, 2.8em) !important;
+  line-height:1.05;
   color:var(--teal-deep) !important;
   letter-spacing:-.01em;
+  overflow-wrap:break-word;
+  word-break:break-word;
+  hyphens:auto;
 }
 .taxon-authority{
   display:block;
@@ -1817,25 +1972,38 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   background:var(--paper);
 }
 .taxo-line a.newpage:hover{ background:var(--missing); color:#fff !important; }
+@media (max-width:600px){
+  .taxo-line{ font-size:1.05em !important; gap:10px 5px; }
+  .taxo-line a{ padding:.4em .8em; }
+}
 
 /* ---------- Galeria: 2 columnas, foto + leyenda en la misma tarjeta.
    Las leyendas de esta ficha YA traen 'Figura N:' escrito en el
    contenido -> aqui NO se agrega contador CSS (a diferencia de la ficha
-   de especie completa), para no duplicar la numeracion. ---------- */
+   de especie completa), para no duplicar la numeracion. Mismo cambio de
+   fondo que en las otras dos hojas: filas flexbox en vez de
+   'display:grid' + 'display:contents'. ---------- */
 .gallery-2col table{
-  display:grid !important;
-  grid-template-columns:repeat(2, 1fr) !important;
-  gap:24px !important;
+  display:block !important;
   width:100% !important;
   border-collapse:separate !important;
 }
-@media (max-width:640px){
-  .gallery-2col table{ grid-template-columns:1fr !important; }
+.gallery-2col tbody{ display:block !important; }
+.gallery-2col tr{
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:stretch;
+  gap:24px !important;
+  width:100% !important;
+  margin:0 0 24px !important;
 }
-.gallery-2col tbody, .gallery-2col tr{ display:contents !important; }
+.gallery-2col tr:last-child{ margin-bottom:0 !important; }
 .gallery-2col td{
   display:block !important;
+  flex:1 1 calc(50% - 12px) !important;
+  max-width:calc(50% - 12px) !important;
   width:auto !important;
+  box-sizing:border-box !important;
   background:var(--card);
   border:1px solid var(--line-soft);
   border-radius:5px;
@@ -1843,6 +2011,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   box-shadow:var(--shadow);
 }
 .gallery-2col td:empty{ display:none !important; }
+@media (max-width:640px){
+  .gallery-2col td{ flex:1 1 100% !important; max-width:100% !important; }
+}
 .gallery-2col td, .gallery-2col td *{ float:none !important; }
 .gallery-2col td > div{ width:100% !important; margin:0 !important; }
 .gallery-2col img{
@@ -1855,6 +2026,9 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   border-radius:3px;
   display:block;
   margin-bottom:10px;
+}
+@media (max-width:640px){
+  .gallery-2col img{ max-height:360px; }
 }
 .gallery-2col td strong{
   font-family:'Fraunces', serif !important;
