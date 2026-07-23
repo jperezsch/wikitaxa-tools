@@ -21,6 +21,7 @@
 
   /* ---- selector de tipo ---- */
   .type-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
+  .progress-bar{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:-14px 0 24px; }
   .type-card{
     background:var(--card); border:2px solid var(--line); border-radius:10px;
     padding:18px; cursor:pointer; transition:.15s; text-align:left;
@@ -99,6 +100,12 @@
     </div>
   </div>
 
+  <div class="progress-bar">
+    <button class="btn btn-add" onclick="triggerLoadProgress()">📂 Cargar avance (.json)</button>
+    <input type="file" id="progress-file-input" accept="application/json,.json" style="display:none" onchange="loadProgress(event)">
+    <span class="hint" style="margin-left:2px">Retoma una ficha que hayas guardado antes con "Descargar avance".</span>
+  </div>
+
   <!-- ================= PANEL GRUPO ================= -->
   <div class="panel" id="panel-grupo">
     <div class="card">
@@ -149,7 +156,7 @@ Pereópodos ordenados..."></textarea>
     </div>
 
     <div class="card">
-      <div class="section-title">5. Galería <span class="hint" style="color:#8a6300">Enlaces a los grupos subordinados mejor representados (familias, especies destacadas), con foto.</span></div>
+      <div class="section-title">5. Galería <span class="hint" style="color:#8a6300">Enlaces a los grupos subordinados mejor representados (familias, especies destacadas), con foto. La numeración "Figura N." se agrega sola.</span></div>
       <div id="g_gallery_slots"></div>
       <button class="btn btn-add" onclick="addGallerySlot('grupo')">+ Agregar otra imagen</button>
     </div>
@@ -272,6 +279,7 @@ Pereópodos ordenados..."></textarea>
 
   <div class="actions" id="actions" style="display:none">
     <button class="btn btn-main" onclick="generate()">Generar código</button>
+    <button class="btn btn-add" style="margin-left:10px" onclick="downloadProgress()">💾 Descargar avance (.json)</button>
   </div>
   <div class="note" id="pending-note" style="display:none">Elige un tipo de ficha arriba para empezar.</div>
 
@@ -447,9 +455,14 @@ function addGallerySlot(type){
       '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
       '<input type="checkbox" id="'+type[0]+'_autotitulo'+n+'" checked style="width:auto"> ' +
       'Agregar automáticamente el nombre científico al inicio de esta leyenda</label>';
-  } else {
-    captionField = '<label>Texto del enlace <span class="hint">Nombre del grupo o especie tal como debe llamarse la página. Ej: Familia Falklandellidae</span></label>' +
-      '<input type="text" id="'+type[0]+'_pie'+n+'">';
+  } else { // grupo
+    captionField = '<label>Página de destino <span class="hint">Nombre del grupo o especie tal como debe llamarse la página. Para especies, incluye autor y año (ej: Purrankia tantauco Pérez-Schultheiss, 2024); para grupos, el rango + nombre (ej: Familia Falklandellidae).</span></label>' +
+      '<input type="text" id="g_pie'+n+'">' +
+      '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
+      '<input type="checkbox" id="g_autonombre'+n+'" checked style="width:auto"> ' +
+      'Mostrar el nombre completo como leyenda (en cursiva automática si es una especie)</label>' +
+      '<label style="margin-top:8px">Texto adicional <span class="hint">Opcional, se muestra debajo del nombre. Aquí SÍ funciona //cursiva//: a diferencia del texto de "Página de destino" (que Wikidot usa como alias de enlace y no interpreta marcado), este texto queda fuera del enlace.</span></label>' +
+      '<textarea id="g_desc'+n+'" style="height:44px"></textarea>';
   }
   div.innerHTML =
     '<h4>Imagen '+n+'</h4>' +
@@ -473,6 +486,119 @@ function selectType(type){
     addGallerySlot(key);
     addGallerySlot(key);
   }
+}
+
+/* ===================== GUARDAR / CARGAR AVANCE (JSON) =====================
+   Permite exportar todo lo escrito en el formulario (campos + galeria
+   dinamica) a un archivo .json descargable, y volver a cargarlo despues
+   para continuar donde se quedo. El archivo generado para Wikidot NO
+   sirve para esto (es solo el resultado final): este es un archivo
+   aparte, pensado unicamente para reabrir en esta misma herramienta. */
+const STATIC_FIELDS = {
+  grupo: ['g_rango','g_nombre','g_autor_nom','g_autor_inst','g_foto_url','g_foto_title']
+    .concat(Array.from({length:16},(_,i)=>'g_t'+(i+1)))
+    .concat(['g_tree','g_antecedentes','g_reconocimiento','g_diag','g_distribucion','g_referencias']),
+  especie: ['e_titulo','e_autor_nom','e_autor_inst','e_foto_url',
+      'e_db_decanet','e_db_gbif','e_db_eol','e_db_inat',
+      'e_db_extra1_name','e_db_extra1_url','e_db_extra2_name','e_db_extra2_url',
+      'e_sinonimos','e_tecnicos','e_comunes','e_locales']
+    .concat(Array.from({length:16},(_,i)=>'e_t'+(i+1)))
+    .concat(['e_antecedentes','e_reconocimiento','e_diag','e_distribucion','e_otros','e_referencias','e_material']),
+  abrev: ['a_titulo','a_autor_nom','a_autor_inst']
+    .concat(Array.from({length:16},(_,i)=>'a_t'+(i+1)))
+    .concat(['a_det','a_dist','a_refs'])
+};
+const GALLERY_FIELD_SPEC = {
+  grupo:   (n)=>({ text:['g_img'+n,'g_pie'+n,'g_desc'+n], checkbox:['g_autonombre'+n] }),
+  especie: (n)=>({ text:['e_img'+n,'e_pie'+n],            checkbox:['e_autotitulo'+n] }),
+  abrev:   (n)=>({ text:['a_img'+n,'a_pie'+n],            checkbox:[] })
+};
+
+function collectProgress(type){
+  const data = { _tool:'wikitaxa-ficha-generator', _type:type, _version:1, fields:{}, gallery:{ count: gallerySlotCount[type], slots:[] } };
+  STATIC_FIELDS[type].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) data.fields[id] = el.value;
+  });
+  for(let n=1; n<=gallerySlotCount[type]; n++){
+    const spec = GALLERY_FIELD_SPEC[type](n);
+    const slot = {};
+    spec.text.forEach(id=>{ const el=document.getElementById(id); if(el) slot[id]=el.value; });
+    spec.checkbox.forEach(id=>{ const el=document.getElementById(id); if(el) slot[id]=el.checked; });
+    data.gallery.slots.push(slot);
+  }
+  return data;
+}
+
+function downloadProgress(){
+  if(!currentType){ alert('Elige primero un tipo de ficha.'); return; }
+  const data = collectProgress(currentType);
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  let base = 'avance';
+  if(currentType==='grupo') base = document.getElementById('g_nombre').value || 'grupo';
+  else if(currentType==='especie') base = document.getElementById('e_titulo').value.split(' ')[0] || 'especie';
+  else base = document.getElementById('a_titulo').value.split(' ')[0] || 'especie';
+  a.download = 'avance_'+currentType+'_'+base.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.json';
+  a.click();
+}
+
+function triggerLoadProgress(){
+  document.getElementById('progress-file-input').click();
+}
+
+function loadProgress(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    let data;
+    try{ data = JSON.parse(e.target.result); }
+    catch(err){ alert('Ese archivo no es un JSON válido.'); return; }
+    if(!data || !STATIC_FIELDS[data._type]){
+      alert('Ese archivo no corresponde a un avance guardado desde esta herramienta.');
+      return;
+    }
+    applyProgress(data);
+  };
+  reader.readAsText(file);
+  evt.target.value = ''; // permite volver a cargar el mismo archivo si hace falta
+}
+
+function applyProgress(data){
+  const type = data._type;
+  selectType(type); // muestra el panel correcto (puede agregar 2 slots de galeria por defecto)
+
+  // limpia los slots de galeria que selectType haya podido agregar y
+  // reconstruye exactamente los que trae el archivo guardado
+  const container = document.getElementById(
+    type==='grupo' ? 'g_gallery_slots' : type==='especie' ? 'e_gallery_slots' : 'a_gallery_slots'
+  );
+  container.innerHTML = '';
+  gallerySlotCount[type] = 0;
+  const n = (data.gallery && data.gallery.count) || 0;
+  for(let i=0; i<n; i++) addGallerySlot(type);
+
+  // restaura los campos fijos del formulario
+  Object.keys(data.fields || {}).forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.value = data.fields[id];
+  });
+
+  // restaura los campos de cada imagen de la galeria
+  (data.gallery && data.gallery.slots || []).forEach(slot=>{
+    Object.keys(slot).forEach(id=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      if(el.type === 'checkbox') el.checked = !!slot[id];
+      else el.value = slot[id];
+    });
+  });
+
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('dlzone').style.display = 'none';
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 /* ===================== GENERADORES POR TIPO ===================== */
@@ -500,20 +626,31 @@ function buildGalleryWikitext(type, prefix, cols){
         caption = '[[span class="cap"]]'+inner+'[[/span]]';
       } else { // grupo
         const linkText = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+        const autoEl = document.getElementById(prefix+'autonombre'+j);
+        const autoNombre = autoEl ? autoEl.checked : true;
+        const descAdd = (document.getElementById(prefix+'desc'+j)||{}).value || '';
+        let nameLink = '';
         if(linkText){
-          if(isRankLine(linkText)){
-            caption = '[[['+linkText+']]]';
+          if(!autoNombre || isRankLine(linkText)){
+            // sin auto-formato, o es un rango (no aplica cursiva de especie): enlace simple
+            nameLink = '[[['+linkText+']]]';
           } else {
             const bin = splitBinomial(linkText);
             if(bin){
               const binomial = bin.genus+' '+bin.epithet;
-              caption = bin.rest
+              nameLink = bin.rest
                 ? '[[['+linkText+' | '+binomial+']]] [[['+linkText+' | '+bin.rest+']]]'
                 : '[[['+linkText+' | '+binomial+']]]';
             } else {
-              caption = '[[['+linkText+']]]';
+              nameLink = '[[['+linkText+']]]';
             }
           }
+        }
+        // Todo (enlace con el nombre + texto adicional libre) va dentro de
+        // un unico span.cap, para que la numeracion "Figura N." se agregue
+        // sola via contador CSS y no haya que escribirla a mano.
+        if(nameLink || descAdd){
+          caption = '[[span class="cap"]]' + nameLink + (descAdd ? (nameLink ? ' ' : '') + descAdd : '') + '[[/span]]';
         }
       }
       cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n' +
@@ -1315,6 +1452,10 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   display:block !important;
   width:100% !important;
   border-collapse:separate !important;
+  /* Contador de "Figura N." automatico: se reinicia una vez por tabla
+     (=por seccion de galeria) y se incrementa en cada leyenda no vacia,
+     igual criterio que en la ficha de especie. */
+  counter-reset:fig;
 }
 .gallery-wrap tbody{ display:block !important; }
 .gallery-wrap tr{
@@ -1346,43 +1487,45 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   .gallery-wrap tr{ gap:14px !important; }
   .gallery-wrap td{ flex:1 1 100% !important; max-width:100% !important; }
 }
-.gallery-wrap strong{
+/* ---------- Leyenda de cada imagen: envuelve TODO (numero de figura +
+   enlace de nombre + descripcion opcional) en un unico span.cap, igual
+   convencion que en la ficha de especie. La numeracion "Figura N." se
+   agrega sola via contador CSS (no hay que escribirla a mano ni
+   renumerar si se agregan/quitan fotos). ---------- */
+.gallery-wrap td span.cap{
   display:block;
-  font-family:'Fraunces', serif !important;
-  font-weight:600 !important;
-  font-size:.95em !important;
-  color:var(--ink) !important;
-  margin-bottom:8px;
-}
-.gallery-wrap strong em{
-  font-style:italic;
-  color:var(--exists) !important;
-}
-/* Leyenda como enlace real (galeria de ficha de grupo: enlaza a la
-   pagina del grupo/especie subordinada, no es solo texto decorativo).
-   Mismo tratamiento tipografico que el texto en negrita de arriba,
-   pero conservando el color verde/gris de existencia de Wikidot. */
-.gallery-wrap td > a{
-  display:block;
-  font-family:'Fraunces', serif !important;
-  font-weight:600 !important;
-  font-size:.95em !important;
-  text-decoration:none !important;
-  color:var(--exists) !important;
   margin-top:8px;
+  font-size:.95em !important;
+  line-height:1.45;
+}
+.gallery-wrap td span.cap::before{
+  counter-increment:fig;
+  content:'Figura ' counter(fig) '. ';
+  font-family:'IBM Plex Mono', monospace !important;
+  font-weight:600;
+  letter-spacing:.03em;
+  color:var(--sand) !important;
+}
+/* Enlace con el nombre del grupo/especie de destino. Color UNIFORME
+   (var(--ink)) para toda leyenda, sin distinguir pagina creada vs. por
+   crear: dentro de una leyenda de foto esa distincion (verde/cafe) se
+   veia inconsistente entre imagenes. El arbol de "Grupos subordinados"
+   y la Clasificacion mas arriba SI mantienen esa distincion, ya que ahi
+   cumple una funcion de guia de navegacion mas clara. */
+.gallery-wrap td span.cap a{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  text-decoration:none !important;
+  color:var(--ink) !important;
   border-bottom:1px solid transparent;
 }
-.gallery-wrap td > a:hover{ border-bottom-color:var(--rust); color:var(--rust) !important; }
-.gallery-wrap td > a.newpage{
-  color:var(--missing) !important;
-  border-bottom-style:dashed;
-  border-bottom-color:var(--line);
-}
-.gallery-wrap td > a:first-of-type:has(+ a){
-  display:inline;
-  font-style:italic;
-}
-.gallery-wrap td > a + a{ display:inline; margin-top:0; margin-left:.3em; }
+.gallery-wrap td span.cap a:hover{ border-bottom-color:var(--rust); color:var(--rust) !important; }
+.gallery-wrap td span.cap a:first-of-type:has(+ a){ font-style:italic; }
+.gallery-wrap td span.cap a + a{ margin-left:.3em; }
+/* Texto adicional de la leyenda (fuera del enlace): aqui //cursiva//
+   SI funciona, porque a diferencia del texto de un enlace, Wikidot
+   interpreta el marcado normalmente en texto plano. */
+.gallery-wrap td span.cap em{ font-style:italic; color:var(--rust); }
 .gallery-wrap img{
   width:100% !important;
   height:270px;
