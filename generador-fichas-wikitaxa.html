@@ -156,7 +156,7 @@ Pereópodos ordenados..."></textarea>
     </div>
 
     <div class="card">
-      <div class="section-title">5. Galería <span class="hint" style="color:#8a6300">Enlaces a los grupos subordinados mejor representados (familias, especies destacadas), con foto. La numeración "Figura N." se agrega sola.</span></div>
+      <div class="section-title">5. Galería <span class="hint" style="color:#8a6300">Fotos representativas del grupo. La numeración "Figura N." y el nombre de la ficha (rango + nombre) se agregan solos; el índice de navegación a los grupos subordinados ya está en la sección anterior.</span></div>
       <div id="g_gallery_slots"></div>
       <button class="btn btn-add" onclick="addGallerySlot('grupo')">+ Agregar otra imagen</button>
     </div>
@@ -263,7 +263,7 @@ Pereópodos ordenados..."></textarea>
     </div>
 
     <div class="card">
-      <div class="section-title">3. Galería <span class="hint" style="color:#8a6300">Aquí SÍ escribe tú "Figura 1.", "Figura 2." al inicio de cada leyenda (numeración manual, como en tu formato original).</span></div>
+      <div class="section-title">3. Galería <span class="hint" style="color:#8a6300">La numeración "Figura N." y el nombre científico se agregan solos.</span></div>
       <div id="a_gallery_slots"></div>
       <button class="btn btn-add" onclick="addGallerySlot('abrev')">+ Agregar otra imagen</button>
     </div>
@@ -445,25 +445,21 @@ function addGallerySlot(type){
   );
   const div = document.createElement('div');
   div.className = 'gallery-slot';
-  let captionField = '';
-  if(type==='abrev'){
-    captionField = '<label>Leyenda completa <span class="hint">Incluye tú "Figura '+n+'." al inicio, y //cursiva// para el nombre científico si corresponde.</span></label>' +
-      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px">Figura '+n+'. </textarea>';
-  } else if(type==='especie'){
-    captionField = '<label>Descripción de la imagen <span class="hint">Texto libre para esta foto (ej: macho paratipo, vista dorsal). Usa //cursiva// donde corresponda.</span></label>' +
-      '<textarea id="'+type[0]+'_pie'+n+'" style="height:50px"></textarea>' +
-      '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
-      '<input type="checkbox" id="'+type[0]+'_autotitulo'+n+'" checked style="width:auto"> ' +
-      'Agregar automáticamente el nombre científico al inicio de esta leyenda</label>';
-  } else { // grupo
-    captionField = '<label>Página de destino <span class="hint">Nombre del grupo o especie tal como debe llamarse la página. Para especies, incluye autor y año (ej: Purrankia tantauco Pérez-Schultheiss, 2024); para grupos, el rango + nombre (ej: Familia Falklandellidae).</span></label>' +
-      '<input type="text" id="g_pie'+n+'">' +
-      '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
-      '<input type="checkbox" id="g_autonombre'+n+'" checked style="width:auto"> ' +
-      'Mostrar el nombre completo como leyenda (en cursiva automática si es una especie)</label>' +
-      '<label style="margin-top:8px">Texto adicional <span class="hint">Opcional, se muestra debajo del nombre. Aquí SÍ funciona //cursiva//: a diferencia del texto de "Página de destino" (que Wikidot usa como alias de enlace y no interpreta marcado), este texto queda fuera del enlace.</span></label>' +
-      '<textarea id="g_desc'+n+'" style="height:44px"></textarea>';
-  }
+  const p = type[0]; // g / e / a
+  const autoLabel = type==='grupo'
+    ? 'Agregar automáticamente el nombre de la ficha al inicio de esta leyenda'
+    : 'Agregar automáticamente el nombre científico al inicio de esta leyenda';
+  // Mismo patrón para las 3 fichas: "Figura N." se agrega solo (contador CSS),
+  // el nombre de la propia ficha se puede agregar con un clic (checkbox), y
+  // el texto libre queda FUERA de cualquier enlace, asi que aqui //cursiva//
+  // si funciona (Wikidot no interpreta marcado dentro del alias de un
+  // enlace, pero este campo ya no arma ningun enlace).
+  const captionField =
+    '<label>Descripción de la imagen <span class="hint">Texto libre para esta foto (ej: vista dorsal, macho paratipo). Usa //cursiva// donde corresponda.</span></label>' +
+    '<textarea id="'+p+'_pie'+n+'" style="height:50px"></textarea>' +
+    '<label style="margin-top:6px; font-weight:400; display:flex; align-items:center; gap:6px;">' +
+    '<input type="checkbox" id="'+p+'_autotitulo'+n+'" checked style="width:auto"> ' +
+    autoLabel + '</label>';
   div.innerHTML =
     '<h4>Imagen '+n+'</h4>' +
     '<div class="row c2"><div><label>URL de la imagen</label><input type="text" id="'+type[0]+'_img'+n+'"></div><div>'+captionField+'</div></div>';
@@ -508,10 +504,16 @@ const STATIC_FIELDS = {
     .concat(Array.from({length:16},(_,i)=>'a_t'+(i+1)))
     .concat(['a_det','a_dist','a_refs'])
 };
+// Ahora las 3 fichas usan exactamente el mismo patrón de leyenda
+// (imagen + descripción libre + checkbox de nombre automático), asi
+// que el esquema de campos de galeria es identico para las tres.
+function galleryFieldSpec(prefix, n){
+  return { text:[prefix+'img'+n, prefix+'pie'+n], checkbox:[prefix+'autotitulo'+n] };
+}
 const GALLERY_FIELD_SPEC = {
-  grupo:   (n)=>({ text:['g_img'+n,'g_pie'+n,'g_desc'+n], checkbox:['g_autonombre'+n] }),
-  especie: (n)=>({ text:['e_img'+n,'e_pie'+n],            checkbox:['e_autotitulo'+n] }),
-  abrev:   (n)=>({ text:['a_img'+n,'a_pie'+n],            checkbox:[] })
+  grupo:   (n)=>galleryFieldSpec('g_', n),
+  especie: (n)=>galleryFieldSpec('e_', n),
+  abrev:   (n)=>galleryFieldSpec('a_', n)
 };
 
 function collectProgress(type){
@@ -602,6 +604,22 @@ function applyProgress(data){
 }
 
 /* ===================== GENERADORES POR TIPO ===================== */
+/* Nombre "propio" de la ficha, listo para insertar en negrita (y en
+   cursiva si corresponde a una especie) al inicio de una leyenda. Las
+   3 fichas usan exactamente el mismo criterio, asi que esta funcion
+   es compartida. */
+function buildAutoName(type){
+  if(type==='grupo'){
+    const rango = document.getElementById('g_rango').value.trim();
+    const nombre = document.getElementById('g_nombre').value.trim();
+    const full = (rango ? rango+' ' : '') + nombre;
+    return full.trim() ? '**'+full.trim()+'**' : '';
+  }
+  const t = parseSpeciesTitle(document.getElementById(type==='especie' ? 'e_titulo' : 'a_titulo').value || '');
+  if(!t.binomial) return '';
+  return '**//'+t.binomial+'// '+t.authority+'**';
+}
+
 function buildGalleryWikitext(type, prefix, cols){
   const n = gallerySlotCount[type];
   let rows = [];
@@ -610,49 +628,14 @@ function buildGalleryWikitext(type, prefix, cols){
     for(let j=i;j<i+cols && j<=n;j++){
       const url = (document.getElementById(prefix+'img'+j)||{}).value || '';
       if(!url){ cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n[[/cell]]'); continue; }
-      let caption = '';
-      if(type==='abrev'){
-        const raw = (document.getElementById(prefix+'pie'+j)||{}).value || '';
-        const m = raw.match(/^(Figura\s*\d+\s*[.:]?)\s*([\s\S]*)$/i);
-        caption = m ? '[[span class="fig-num"]]'+m[1]+'[[/span]] '+m[2] : raw;
-      } else if(type==='especie'){
-        const t = parseSpeciesTitle(document.getElementById('e_titulo').value||'');
-        const desc = (document.getElementById(prefix+'pie'+j)||{}).value || '';
-        const autoTituloEl = document.getElementById(prefix+'autotitulo'+j);
-        const autoTitulo = autoTituloEl ? autoTituloEl.checked : true;
-        const inner = autoTitulo
-          ? '**//'+t.binomial+'// '+t.authority+'**' + (desc ? ' '+desc : '')
-          : desc;
-        caption = '[[span class="cap"]]'+inner+'[[/span]]';
-      } else { // grupo
-        const linkText = (document.getElementById(prefix+'pie'+j)||{}).value || '';
-        const autoEl = document.getElementById(prefix+'autonombre'+j);
-        const autoNombre = autoEl ? autoEl.checked : true;
-        const descAdd = (document.getElementById(prefix+'desc'+j)||{}).value || '';
-        let nameLink = '';
-        if(linkText){
-          if(!autoNombre || isRankLine(linkText)){
-            // sin auto-formato, o es un rango (no aplica cursiva de especie): enlace simple
-            nameLink = '[[['+linkText+']]]';
-          } else {
-            const bin = splitBinomial(linkText);
-            if(bin){
-              const binomial = bin.genus+' '+bin.epithet;
-              nameLink = bin.rest
-                ? '[[['+linkText+' | '+binomial+']]] [[['+linkText+' | '+bin.rest+']]]'
-                : '[[['+linkText+' | '+binomial+']]]';
-            } else {
-              nameLink = '[[['+linkText+']]]';
-            }
-          }
-        }
-        // Todo (enlace con el nombre + texto adicional libre) va dentro de
-        // un unico span.cap, para que la numeracion "Figura N." se agregue
-        // sola via contador CSS y no haya que escribirla a mano.
-        if(nameLink || descAdd){
-          caption = '[[span class="cap"]]' + nameLink + (descAdd ? (nameLink ? ' ' : '') + descAdd : '') + '[[/span]]';
-        }
-      }
+      const desc = (document.getElementById(prefix+'pie'+j)||{}).value || '';
+      const autoEl = document.getElementById(prefix+'autotitulo'+j);
+      const autoOn = autoEl ? autoEl.checked : true;
+      const autoName = autoOn ? buildAutoName(type) : '';
+      const inner = autoName ? autoName + (desc ? ' '+desc : '') : desc;
+      // "Figura N." se agrega sola via contador CSS (::before en span.cap)
+      // en las 3 fichas; no hace falta escribirla ni renumerar a mano.
+      const caption = inner ? '[[span class="cap"]]'+inner+'[[/span]]' : '';
       cells.push('[[cell style="width: '+(100/cols)+'%; padding: 5px; vertical-align: top;"]]\n' +
         '[[image '+url+' width="100%" alt="Imagen '+j+'" link="*'+url+'"]]' +
         (caption ? '\n'+caption : '') + '\n[[/cell]]');
@@ -1487,16 +1470,19 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   .gallery-wrap tr{ gap:14px !important; }
   .gallery-wrap td{ flex:1 1 100% !important; max-width:100% !important; }
 }
-/* ---------- Leyenda de cada imagen: envuelve TODO (numero de figura +
-   enlace de nombre + descripcion opcional) en un unico span.cap, igual
-   convencion que en la ficha de especie. La numeracion "Figura N." se
-   agrega sola via contador CSS (no hay que escribirla a mano ni
-   renumerar si se agregan/quitan fotos). ---------- */
+/* ---------- Leyenda de cada imagen: "Figura N." + nombre de la ficha
+   (opcional, en negrita) + descripcion libre, todo dentro de un unico
+   span.cap. Mismo patron exacto que en las otras dos fichas (especie y
+   especie abreviada), para que las leyendas se vean consistentes en
+   todo el sitio. La numeracion "Figura N." se agrega sola via contador
+   CSS (no hay que escribirla a mano ni renumerar si se agregan/quitan
+   fotos). ---------- */
 .gallery-wrap td span.cap{
   display:block;
   margin-top:8px;
   font-size:.95em !important;
   line-height:1.45;
+  color:var(--ink-soft) !important;
 }
 .gallery-wrap td span.cap::before{
   counter-increment:fig;
@@ -1506,25 +1492,13 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   letter-spacing:.03em;
   color:var(--sand) !important;
 }
-/* Enlace con el nombre del grupo/especie de destino. Color UNIFORME
-   (var(--ink)) para toda leyenda, sin distinguir pagina creada vs. por
-   crear: dentro de una leyenda de foto esa distincion (verde/cafe) se
-   veia inconsistente entre imagenes. El arbol de "Grupos subordinados"
-   y la Clasificacion mas arriba SI mantienen esa distincion, ya que ahi
-   cumple una funcion de guia de navegacion mas clara. */
-.gallery-wrap td span.cap a{
+.gallery-wrap td span.cap strong{
   font-family:'Fraunces', serif !important;
   font-weight:600 !important;
-  text-decoration:none !important;
   color:var(--ink) !important;
-  border-bottom:1px solid transparent;
 }
-.gallery-wrap td span.cap a:hover{ border-bottom-color:var(--rust); color:var(--rust) !important; }
-.gallery-wrap td span.cap a:first-of-type:has(+ a){ font-style:italic; }
-.gallery-wrap td span.cap a + a{ margin-left:.3em; }
-/* Texto adicional de la leyenda (fuera del enlace): aqui //cursiva//
-   SI funciona, porque a diferencia del texto de un enlace, Wikidot
-   interpreta el marcado normalmente en texto plano. */
+/* Texto en cursiva (nombre cientifico automatico o //cursiva// escrita
+   a mano en la descripcion libre): mismo color en toda la ficha. */
 .gallery-wrap td span.cap em{ font-style:italic; color:var(--rust); }
 .gallery-wrap img{
   width:100% !important;
@@ -1958,18 +1932,19 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
   font-size:.95em !important;
   color:var(--ink) !important;
 }
-.gallery-2col td em{ font-style:italic; color:var(--exists) !important; }
+.gallery-2col td em{ font-style:italic; color:var(--rust) !important; }
 `;
 const ABREV_CSS = `/* =====================================================================
-   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE ABREVIADA (v2 — responsivo)
+   ESTILO 'FICHA DE ESPECIMEN' - FICHA DE ESPECIE ABREVIADA (v3 — responsivo + leyendas estandarizadas)
    -----------------------------------------------------------------------
    Mismas reglas tecnicas de siempre: max 2 niveles de anidamiento de
    divs, comillas simples exclusivamente, hr con clear:both, sin
    modificar ningun [[[...]]]. A diferencia de la ficha de especie
    completa: no hay foto de portada flotante (la galeria cumple ese rol,
-   viene justo despues de Clasificacion), y las leyendas YA incluyen su
-   propio 'Figura N:' escrito a mano en el contenido -> NO se usa
-   contador CSS automatico aqui (evita numeracion duplicada).
+   viene justo despues de Clasificacion). Las leyendas de la galeria
+   ahora usan el mismo patron automatico que las otras dos fichas:
+   "Figura N." se agrega sola via contador CSS (ya no hay que escribirla
+   a mano), y el nombre cientifico es opcional via un checkbox.
 
    Esta hoja era la que menos puntos de quiebre (media queries) tenia
    de las tres, asi que aqui se agregaron todos los que ya existian en
@@ -2121,15 +2096,17 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 }
 
 /* ---------- Galeria: 2 columnas, foto + leyenda en la misma tarjeta.
-   Las leyendas de esta ficha YA traen 'Figura N:' escrito en el
-   contenido -> aqui NO se agrega contador CSS (a diferencia de la ficha
-   de especie completa), para no duplicar la numeracion. Mismo cambio de
-   fondo que en las otras dos hojas: filas flexbox en vez de
-   'display:grid' + 'display:contents'. ---------- */
+   Mismo patron exacto que en GROUP_CSS y SPECIES_CSS: "Figura N." se
+   agrega sola via contador CSS, el nombre cientifico es opcional (en
+   negrita + cursiva) y el texto libre admite //cursiva// porque ya no
+   queda dentro de ningun enlace. Tambien se reemplazo el viejo truco
+   'display:grid' + 'display:contents' por filas flexbox, igual que en
+   las otras dos hojas. ---------- */
 .gallery-2col table{
   display:block !important;
   width:100% !important;
   border-collapse:separate !important;
+  counter-reset:fig;
 }
 .gallery-2col tbody{ display:block !important; }
 .gallery-2col tr{
@@ -2173,23 +2150,26 @@ html, body{ overflow-x:hidden !important; max-width:100% !important; }
 @media (max-width:640px){
   .gallery-2col img{ max-height:360px; }
 }
-.gallery-2col td strong{
-  font-family:'Fraunces', serif !important;
-  font-weight:600 !important;
+.gallery-2col td span.cap{
+  display:block;
   font-size:.92em !important;
-  color:var(--ink) !important;
+  line-height:1.45;
+  color:var(--ink-soft) !important;
 }
-.gallery-2col td strong em{ font-style:italic; color:var(--exists) !important; }
-/* Numero de figura destacado (detectado automaticamente al inicio de la
-   leyenda por la herramienta generadora, ej. 'Figura 1.'), mismo
-   lenguaje visual que el contador automatico de la ficha de especie
-   completa. */
-.gallery-2col td span.fig-num{
+.gallery-2col td span.cap::before{
+  counter-increment:fig;
+  content:'Figura ' counter(fig) '. ';
   font-family:'IBM Plex Mono', monospace !important;
   font-weight:600;
   letter-spacing:.03em;
   color:var(--sand) !important;
 }
+.gallery-2col td span.cap strong{
+  font-family:'Fraunces', serif !important;
+  font-weight:600 !important;
+  color:var(--ink) !important;
+}
+.gallery-2col td span.cap em{ font-style:italic; color:var(--rust) !important; }
 
 /* ---------- Prosa (Determinacion, Distribucion): 1 columna por defecto,
    2 columnas solo si el texto es largo (clase .wide), mismo criterio
